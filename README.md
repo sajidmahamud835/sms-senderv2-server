@@ -1,0 +1,1 @@
+Server Url: https://sms-sender-server.herokuapp.com/sms/send
