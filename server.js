@@ -4,6 +4,7 @@ const cors = require("cors");
 const port = process.env.PORT || 4000;
 const twilio = require("twilio");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const { response } = require("express");
 
 app.use(cors());
 app.use(express.json());
@@ -71,8 +72,24 @@ async function run() {
 		// post mobile number data api from client site
 		app.post("/smsApi/number", async (req, res) => {
 			const data = req.body;
-			const apiData = await mobileNumberDataCollection.insertOne(data);
-			res.json(apiData);
+			const numbers = data.twilioNumbers;
+			const response = [];
+
+			for (let index = 0; index < numbers.length; index++) {
+				const element = numbers[index];
+
+				const data = {
+					number: element,
+				};
+
+				console.log(data);
+
+				const numberData = await mobileNumberDataCollection.insertOne(data);
+				response.push(numberData);
+			}
+
+			res.json(response);
+			console.log(response);
 		});
 
 		console.log("Database connected");
