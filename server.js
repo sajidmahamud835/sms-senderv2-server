@@ -5,6 +5,7 @@ const port = process.env.PORT || 4000;
 const twilio = require("twilio");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const { response } = require("express");
+const objectId = require("mongodb").ObjectId;
 
 app.use(cors());
 app.use(express.json());
@@ -62,6 +63,22 @@ async function run() {
 		const smsApiDataCollection = database.collection("smsApi");
 		const mobileNumberDataCollection = database.collection("mobileNumberData");
 
+		// get all mobile number data
+		app.get("/smsApi/numbers", async (req, res) => {
+			const cursor = mobileNumberDataCollection.find({});
+			const mobileNumberData = await cursor.toArray();
+			res.send(mobileNumberData);
+		});
+
+		// delete mobile number data
+		app.delete("/cart/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: objectId(id) };
+			console.log(query);
+			const result = await mobileNumberDataCollection.deleteOne(query);
+			res.json(result);
+		});
+
 		// post sms api from client site
 		app.post("/smsApi", async (req, res) => {
 			const data = req.body;
@@ -70,7 +87,7 @@ async function run() {
 		});
 
 		// post mobile number data api from client site
-		app.post("/smsApi/number", async (req, res) => {
+		app.post("/smsApi/numbers", async (req, res) => {
 			const data = req.body;
 			const numbers = data.twilioNumbers;
 			const response = [];
