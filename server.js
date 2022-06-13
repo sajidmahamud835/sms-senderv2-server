@@ -98,14 +98,14 @@ async function run() {
 					number: element,
 				};
 
-				console.log(data);
+				// console.log(data);
 
 				const numberData = await mobileNumberDataCollection.insertOne(data);
 				response.push(numberData);
 			}
 
 			res.json(response);
-			console.log(response);
+			// console.log(response);
 		});
 
 		console.log("Database connected");
