@@ -71,10 +71,9 @@ async function run() {
 		});
 
 		// delete mobile number data
-		app.delete("/cart/:id", async (req, res) => {
+		app.delete("/smsApi/numbers/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: objectId(id) };
-			console.log(query);
 			const result = await mobileNumberDataCollection.deleteOne(query);
 			res.json(result);
 		});
