@@ -66,9 +66,54 @@ async function run() {
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
+			const log = {
+				rawHeaders: req.rawHeaders,
+				method: req.method,
+				url: req.url,
+				statusCode: req.statusCode,
+				statusMessage: req.statusMessage,
+			};
+			console.log("/smsApi/numbers - request", log);
+
 			const cursor = mobileNumberDataCollection.find({});
 			const mobileNumberData = await cursor.toArray();
 			res.send(mobileNumberData);
+
+			console.log("/smsApi/numbers - response", mobileNumberData);
+		});
+
+		// update mobile number data
+		app.put("/smsApi/numbers/:id", async (req, res) => {
+			const log = {
+				rawHeaders: req.rawHeaders,
+				method: req.method,
+				url: req.url,
+				statusCode: req.statusCode,
+				statusMessage: req.statusMessage,
+			};
+			console.log("/smsApi/numbers/:id - request", log);
+
+			const id = req.params.id;
+			const updatedNumber = req.body;
+			const filter = { _id: objectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					number: updatedNumber.number,
+				},
+			};
+			const result = await mobileNumberDataCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			if (result) {
+				const cursor = mobileNumberDataCollection.find({});
+				const mobileNumberData = await cursor.toArray();
+				res.json({ ...result, data: mobileNumberData });
+			}
+
+			console.log("/smsApi/numbers/:id - response", log);
 		});
 
 		// delete mobile number data
@@ -89,14 +134,14 @@ async function run() {
 		// post CSV File from client site
 		app.post("/csvList", async (req, res) => {
 			const data = req.body;
-			console.log(data);
+			// console.log(data);
 			// const csvData = await csvFileDataCollection.insertOne(data);
 			// console.log(csvData)
 			// res.json(csvData);
 			const response = [];
 			for (let index = 0; index < data.length; index++) {
 				const element = data[index];
-				console.log(element);
+				// console.log(element);
 				const csvList = {
 					id: element.id,
 					name: element.name,
@@ -109,7 +154,7 @@ async function run() {
 			}
 
 			res.json(response);
-			console.log(response);
+			// console.log(response);
 		});
 
 		// get all CSV file data from database
@@ -133,14 +178,14 @@ async function run() {
 					number: element,
 				};
 
-				console.log(data);
+				// console.log(data);
 
 				const numberData = await mobileNumberDataCollection.insertOne(data);
 				response.push(numberData);
 			}
 
 			res.json(response);
-			console.log(response);
+			// console.log(response);
 		});
 
 		console.log("Database connected");
