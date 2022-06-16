@@ -95,7 +95,7 @@ async function run() {
       console.log(data)
       // const csvData = await csvFileDataCollection.insertOne(data);
       // console.log(csvData)
-      // res.json(csvData); 
+      // res.json(csvData);
       const response = [];
       for (let index = 0; index < data.length; index++) {
         const element = data[index];
