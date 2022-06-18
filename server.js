@@ -63,6 +63,7 @@ async function run() {
 		const smsApiDataCollection = database.collection("smsApi");
 		const mobileNumberDataCollection = database.collection("mobileNumberData");
 		const csvFileDataCollection = database.collection("csvFileData");
+		const uploadExcelFileCollection = database.collection("uploadExcelFile");
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
@@ -186,6 +187,21 @@ async function run() {
 
 			res.json(response);
 			// console.log(response);
+		});
+
+		// Get Upload Excel File
+		app.get("/upload-excel-file", async (req, res) => {
+			
+			const cursor = uploadExcelFileCollection.find({});
+			const uploadExcelFileData = await cursor.toArray();
+			res.send(uploadExcelFileData);
+		});
+
+		// Post Upload Excel File
+		app.post("/upload-excel-file", async (req, res) => {
+			const data = req.body;
+			const uploadExcelFileData = await uploadExcelFileCollection.insertOne(data);
+			res.json(uploadExcelFileData);
 		});
 
 		console.log("Database connected");
