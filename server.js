@@ -4,6 +4,7 @@ const cors = require("cors");
 const port = process.env.PORT || 4000;
 const twilio = require("twilio");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const ObjectId = require('mongodb').ObjectId
 const { response } = require("express");
 const objectId = require("mongodb").ObjectId;
 
@@ -191,10 +192,17 @@ async function run() {
 
 		// Get Upload Excel File
 		app.get("/upload-excel-file", async (req, res) => {
-			
 			const cursor = uploadExcelFileCollection.find({});
 			const uploadExcelFileData = await cursor.toArray();
 			res.send(uploadExcelFileData);
+		});
+		// Get Upload Excel File
+		app.get("/excel-file/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const cursor = uploadExcelFileCollection.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
 		});
 
 		// Post Upload Excel File
@@ -203,7 +211,12 @@ async function run() {
 			const uploadExcelFileData = await uploadExcelFileCollection.insertOne(data);
 			res.json(uploadExcelFileData);
 		});
-
+		app.delete('/delete-excel-file/:id', async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const result = await uploadExcelFileCollection.deleteOne(query);
+			res.json(result);
+		})
 		console.log("Database connected");
 	} finally {
 		// await client.close();
