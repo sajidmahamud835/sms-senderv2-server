@@ -65,6 +65,7 @@ async function run() {
 		const mobileNumberDataCollection = database.collection("mobileNumberData");
 		const csvFileDataCollection = database.collection("csvFileData");
 		const uploadExcelFileCollection = database.collection("uploadExcelFile");
+		const campaignCollection = database.collection("campaignListData");
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
@@ -217,11 +218,21 @@ async function run() {
 			res.json(uploadExcelFileData);
 		});
 
+		// delete uploaded excel file
 		app.delete("/delete-excel-file/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await uploadExcelFileCollection.deleteOne(query);
 			res.json(result);
+		});
+
+		// post campaign file
+		app.post("/campaign-list", async (req, res) => {
+			const data = req.body;
+			const campaignListData = await campaignCollection.insertOne(
+				data
+			);
+			res.json(campaignListData);
 		});
 
 		console.log("Database connected");
