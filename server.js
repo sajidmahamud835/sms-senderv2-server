@@ -161,7 +161,6 @@ async function run() {
 		});
 
 		// get all CSV file data from database
-
 		app.get("/csvList", async (req, res) => {
 			const cursor = csvFileDataCollection.find({});
 			const csvDataList = await cursor.toArray();
@@ -226,12 +225,17 @@ async function run() {
 			res.json(result);
 		});
 
+		// get all CSV file data from database
+		app.get("/campaign-list", async (req, res) => {
+			const cursor = campaignCollection.find({});
+			const campaignDataList = await cursor.toArray();
+			res.send(campaignDataList);
+		});
+
 		// post campaign file
 		app.post("/campaign-list", async (req, res) => {
 			const data = req.body;
-			const campaignListData = await campaignCollection.insertOne(
-				data
-			);
+			const campaignListData = await campaignCollection.insertOne(data);
 			res.json(campaignListData);
 		});
 
