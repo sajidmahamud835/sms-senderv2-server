@@ -66,6 +66,7 @@ async function run() {
 		const csvFileDataCollection = database.collection("csvFileData");
 		const uploadExcelFileCollection = database.collection("uploadExcelFile");
 		const campaignCollection = database.collection("campaignListData");
+		const subscriptionListCollection = database.collection("subscriptionList");
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
@@ -210,11 +211,11 @@ async function run() {
 		// Get Uploaded single Excel File
 		app.get("/campaign-details/:id", async (req, res) => {
 			const id = req.params.id;
-			console.log(id)
-			// const query = { _id: ObjectId(id) };
-			// const cursor = campaignCollection.find(query);
-			// const result = await cursor.toArray();
-			// res.send(result);
+			const query = { _id: ObjectId(id) };
+			console.log(query)
+			const cursor = campaignCollection.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
 		});
 
 		// Post Upload Excel File
@@ -232,11 +233,23 @@ async function run() {
 			const campaignDataList = await cursor.toArray();
 			res.send(campaignDataList);
 		});
+		// get all CSV file data from database
+		app.get("/subscription-list", async (req, res) => {
+			const cursor = subscriptionListCollection.find({});
+			const campaignDataList = await cursor.toArray();
+			res.send(campaignDataList);
+		});
 
 		// post campaign file
 		app.post("/campaign-list", async (req, res) => {
 			const data = req.body;
 			const campaignListData = await campaignCollection.insertOne(data);
+			res.json(campaignListData);
+		});
+		// post campaign file
+		app.post("/subscription-list", async (req, res) => {
+			const data = req.body;
+			const campaignListData = await subscriptionListCollection.insertOne(data);
 			res.json(campaignListData);
 		});
 		// delete uploaded excel file
@@ -251,6 +264,13 @@ async function run() {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await campaignCollection.deleteOne(query);
+			res.json(result);
+		});
+		// delete uploaded excel file
+		app.delete("/delete-subscription/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const result = await subscriptionListCollection.deleteOne(query);
 			res.json(result);
 		});
 
