@@ -239,6 +239,15 @@ async function run() {
 			const result = await cursor.toArray();
 			res.send(result);
 		});
+		// Get Uploaded single Excel File
+		app.get("/campaign-details/:id", async (req, res) => {
+			const id = req.params.id;
+			console.log(id)
+			// const query = { _id: ObjectId(id) };
+			// const cursor = campaignCollection.find(query);
+			// const result = await cursor.toArray();
+			// res.send(result);
+		});
 
 		// Post Upload Excel File
 		app.post("/upload-excel-file", async (req, res) => {
@@ -247,14 +256,6 @@ async function run() {
 				data
 			);
 			res.json(uploadExcelFileData);
-		});
-
-		// delete uploaded excel file
-		app.delete("/delete-excel-file/:id", async (req, res) => {
-			const id = req.params.id;
-			const query = { _id: ObjectId(id) };
-			const result = await uploadExcelFileCollection.deleteOne(query);
-			res.json(result);
 		});
 
 		// get all CSV file data from database
@@ -269,6 +270,20 @@ async function run() {
 			const data = req.body;
 			const campaignListData = await campaignCollection.insertOne(data);
 			res.json(campaignListData);
+		});
+		// delete uploaded excel file
+		app.delete("/delete-excel-file/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const result = await uploadExcelFileCollection.deleteOne(query);
+			res.json(result);
+		});
+		// delete uploaded excel file
+		app.delete("/delete-campaign/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const result = await campaignCollection.deleteOne(query);
+			res.json(result);
 		});
 
 		console.log("Database connected");
