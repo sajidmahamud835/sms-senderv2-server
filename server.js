@@ -242,7 +242,7 @@ async function run() {
 		// Get Uploaded single Excel File
 		app.get("/campaign-details/:id", async (req, res) => {
 			const id = req.params.id;
-			console.log(id)
+			console.log(id);
 			// const query = { _id: ObjectId(id) };
 			// const cursor = campaignCollection.find(query);
 			// const result = await cursor.toArray();
