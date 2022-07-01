@@ -66,6 +66,7 @@ async function run() {
 		const csvFileDataCollection = database.collection("csvFileData");
 		const uploadExcelFileCollection = database.collection("uploadExcelFile");
 		const campaignCollection = database.collection("campaignListData");
+		const usersDataCollections = database.collection("users");
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
@@ -239,6 +240,7 @@ async function run() {
 			const result = await cursor.toArray();
 			res.send(result);
 		});
+
 		// Get Uploaded single Excel File
 		app.get("/campaign-details/:id", async (req, res) => {
 			const id = req.params.id;
@@ -271,6 +273,7 @@ async function run() {
 			const campaignListData = await campaignCollection.insertOne(data);
 			res.json(campaignListData);
 		});
+
 		// delete uploaded excel file
 		app.delete("/delete-excel-file/:id", async (req, res) => {
 			const id = req.params.id;
@@ -278,12 +281,34 @@ async function run() {
 			const result = await uploadExcelFileCollection.deleteOne(query);
 			res.json(result);
 		});
+
 		// delete uploaded excel file
 		app.delete("/delete-campaign/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await campaignCollection.deleteOne(query);
 			res.json(result);
+		});
+
+		// add users to database
+		app.post("/users", async (req, res) => {
+			const user = req.body;
+			const usersData = await usersDataCollections.insertOne(user);
+			res.json(usersData);
+		});
+
+		// update user to database
+		app.put("/users", async (req, res) => {
+			const user = req.body;
+			const filter = { email: user.email };
+			const options = { upsert: true };
+			const updateDoc = { $set: user };
+			const updatedUserData = await usersDataCollections.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			res.json(updatedUserData);
 		});
 
 		console.log("Database connected");
