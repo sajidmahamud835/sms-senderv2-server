@@ -303,6 +303,7 @@ async function run() {
 			const filter = { email: user.email };
 			const options = { upsert: true };
 			const updateDoc = { $set: user };
+			console.log(updateDoc);
 			const updatedUserData = await usersDataCollections.updateOne(
 				filter,
 				updateDoc,
