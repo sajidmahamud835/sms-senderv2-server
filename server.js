@@ -246,7 +246,7 @@ async function run() {
 			const id = req.params.id;
 
 			const query = { _id: ObjectId(id) };
-			console.log(query)
+			console.log(query);
 			const cursor = campaignCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
@@ -267,6 +267,7 @@ async function run() {
 			const campaignDataList = await cursor.toArray();
 			res.send(campaignDataList);
 		});
+
 		// get all CSV file data from database
 		app.get("/subscription-list", async (req, res) => {
 			const cursor = subscriptionListCollection.find({});
@@ -318,6 +319,15 @@ async function run() {
 			res.send(usersDataList);
 		});
 
+		// get users from database
+		app.get("/users/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { id: id };
+			const cursor = usersDataCollections.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
 		// add users to database
 		app.post("/users", async (req, res) => {
 			const user = req.body;
@@ -326,18 +336,42 @@ async function run() {
 		});
 
 		// update user to database
-		app.put("/users", async (req, res) => {
-			const user = req.body;
-			const filter = { email: user.email };
+		// app.put("/users", async (req, res) => {
+		// 	const user = req.body;
+		// 	const filter = { email: user.email };
+		// 	const options = { upsert: true };
+		// 	const updateDoc = { $set: user };
+		// 	console.log(updateDoc);
+		// 	const updatedUserData = await usersDataCollections.updateOne(
+		// 		filter,
+		// 		updateDoc,
+		// 		options
+		// 	);
+		// 	res.json(updatedUserData);
+		// });
+
+		// put user data to database
+		app.put("/users/:id", async (req, res) => {
+			const id = req.params.id;
+			const updateUserData = req.body;
+			// delete updateUserData._id;
+			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
-			const updateDoc = { $set: user };
-			console.log(updateDoc);
-			const updatedUserData = await usersDataCollections.updateOne(
+			const updateDoc = {
+				$set: {
+					...updateUserData,
+				},
+			};
+			const result = await usersDataCollections.updateOne(
 				filter,
 				updateDoc,
 				options
 			);
-			res.json(updatedUserData);
+			if (result) {
+				const cursor = usersDataCollections.find({});
+				const latestUsersData = await cursor.toArray();
+				res.json({ ...result, data: latestUsersData });
+			}
 		});
 
 		// delete user to database
