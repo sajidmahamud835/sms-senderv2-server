@@ -66,6 +66,7 @@ async function run() {
 		const csvFileDataCollection = database.collection("csvFileData");
 		const uploadExcelFileCollection = database.collection("uploadExcelFile");
 		const campaignCollection = database.collection("campaignListData");
+		const usersDataCollections = database.collection("users");
 		const subscriptionListCollection = database.collection("subscriptionList");
 
 		// get all mobile number data
@@ -77,13 +78,13 @@ async function run() {
 				statusCode: req.statusCode,
 				statusMessage: req.statusMessage,
 			};
-			console.log("/smsApi/numbers - request", log);
+			// console.log("/smsApi/numbers - request", log);
 
 			const cursor = mobileNumberDataCollection.find({});
 			const mobileNumberData = await cursor.toArray();
 			res.send(mobileNumberData);
 
-			console.log("/smsApi/numbers - response", mobileNumberData);
+			// console.log("/smsApi/numbers - response", mobileNumberData);
 		});
 
 		// update mobile number data
@@ -95,7 +96,7 @@ async function run() {
 				statusCode: req.statusCode,
 				statusMessage: req.statusMessage,
 			};
-			console.log("/smsApi/numbers/:id - request", log);
+			// console.log("/smsApi/numbers/:id - request", log);
 
 			const id = req.params.id;
 			const updatedNumber = req.body;
@@ -117,7 +118,7 @@ async function run() {
 				res.json({ ...result, data: mobileNumberData });
 			}
 
-			console.log("/smsApi/numbers/:id - response", log);
+			// console.log("/smsApi/numbers/:id - response", log);
 		});
 
 		// delete mobile number data
@@ -129,10 +130,41 @@ async function run() {
 		});
 
 		// post sms api from client site
-		app.post("/smsApi", async (req, res) => {
-			const data = req.body;
-			const apiData = await smsApiDataCollection.insertOne(data);
-			res.json(apiData);
+		// app.post("/smsApi", async (req, res) => {
+		// 	const data = req.body;
+		// 	const apiData = await smsApiDataCollection.insertOne(data);
+		// 	res.json(apiData);
+		// });
+
+		// get sms api data data from database
+		app.get("/smsApi", async (req, res) => {
+			const cursor = smsApiDataCollection.find({});
+			const smsApiData = await cursor.toArray();
+			res.send(smsApiData);
+		});
+
+		// put sms api data to database
+		app.put("/smsApi/:id", async (req, res) => {
+			const id = req.params.id;
+			const updatedSmsApiData = req.body;
+			delete updatedSmsApiData._id;
+			const filter = { _id: objectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					...updatedSmsApiData,
+				},
+			};
+			const result = await smsApiDataCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			if (result) {
+				const cursor = smsApiDataCollection.find({});
+				const latestSmsApiData = await cursor.toArray();
+				res.json({ ...result, data: latestSmsApiData });
+			}
 		});
 
 		// post CSV File from client site
@@ -208,9 +240,11 @@ async function run() {
 			const result = await cursor.toArray();
 			res.send(result);
 		});
+
 		// Get Uploaded single Excel File
 		app.get("/campaign-details/:id", async (req, res) => {
 			const id = req.params.id;
+
 			const query = { _id: ObjectId(id) };
 			console.log(query)
 			const cursor = campaignCollection.find(query);
@@ -246,12 +280,14 @@ async function run() {
 			const campaignListData = await campaignCollection.insertOne(data);
 			res.json(campaignListData);
 		});
+
 		// post campaign file
 		app.post("/subscription-list", async (req, res) => {
 			const data = req.body;
 			const campaignListData = await subscriptionListCollection.insertOne(data);
 			res.json(campaignListData);
 		});
+
 		// delete uploaded excel file
 		app.delete("/delete-excel-file/:id", async (req, res) => {
 			const id = req.params.id;
@@ -259,6 +295,7 @@ async function run() {
 			const result = await uploadExcelFileCollection.deleteOne(query);
 			res.json(result);
 		});
+
 		// delete uploaded excel file
 		app.delete("/delete-campaign/:id", async (req, res) => {
 			const id = req.params.id;
@@ -271,6 +308,43 @@ async function run() {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await subscriptionListCollection.deleteOne(query);
+			res.json(result);
+		});
+
+		// get users from database
+		app.get("/users", async (req, res) => {
+			const cursor = usersDataCollections.find({});
+			const usersDataList = await cursor.toArray();
+			res.send(usersDataList);
+		});
+
+		// add users to database
+		app.post("/users", async (req, res) => {
+			const user = req.body;
+			const usersData = await usersDataCollections.insertOne(user);
+			res.json(usersData);
+		});
+
+		// update user to database
+		app.put("/users", async (req, res) => {
+			const user = req.body;
+			const filter = { email: user.email };
+			const options = { upsert: true };
+			const updateDoc = { $set: user };
+			console.log(updateDoc);
+			const updatedUserData = await usersDataCollections.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			res.json(updatedUserData);
+		});
+
+		// delete user to database
+		app.delete("/users/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: objectId(id) };
+			const result = await usersDataCollections.deleteOne(query);
 			res.json(result);
 		});
 
