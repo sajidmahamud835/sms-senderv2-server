@@ -147,7 +147,6 @@ async function run() {
 			const id = req.params.id;
 			const updatedSmsApiData = req.body;
 			delete updatedSmsApiData._id;
-			console.log(updatedSmsApiData);
 			const filter = { _id: objectId(id) };
 			const options = { upsert: true };
 			const updateDoc = {
@@ -290,6 +289,13 @@ async function run() {
 			res.json(result);
 		});
 
+		// get users from database
+		app.get("/users", async (req, res) => {
+			const cursor = usersDataCollections.find({});
+			const usersDataList = await cursor.toArray();
+			res.send(usersDataList);
+		});
+
 		// add users to database
 		app.post("/users", async (req, res) => {
 			const user = req.body;
@@ -310,6 +316,14 @@ async function run() {
 				options
 			);
 			res.json(updatedUserData);
+		});
+
+		// delete user to database
+		app.delete("/users/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: objectId(id) };
+			const result = await usersDataCollections.deleteOne(query);
+			res.json(result);
 		});
 
 		console.log("Database connected");
