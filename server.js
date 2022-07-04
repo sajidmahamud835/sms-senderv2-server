@@ -7,6 +7,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 const { response } = require("express");
 const objectId = require("mongodb").ObjectId;
+require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
@@ -17,14 +18,13 @@ const client = new MongoClient(uri, {
 	useUnifiedTopology: true,
 	serverApi: ServerApiVersion.v1,
 });
-
 //Send SMS
 app.post("/sms/send", async (req, res) => {
 	try {
 		const { sender, receiver, message } = req.body;
 		const client = new twilio(
-			"ACd7762d947ec45b73ef8d81af705632d8",
-			"1bebc17e27e1c10c8e580a37269cf369"
+			process.env.ACCOUNT_SID,
+			process.env.AUTH_TOKEN,
 		);
 		const message_id = [];
 		for (number of receiver) {
