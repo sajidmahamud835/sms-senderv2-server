@@ -19,6 +19,10 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1,
 });
 
+//date
+const today = new Date();
+const date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-0' + today.getDate();
+
 // MongoDB database
 async function run() {
 	try {
@@ -73,50 +77,101 @@ async function run() {
 		});
 
 		//campaign corn jobs
+		// app.get("/corns/sms", async (req, res) => {
+		// 	try {
+		// 		//getting campaign data from database [{}]
+		// 		const campaigns = await campaignCollection.find({}).toArray();
+		// 		// console.log("all campaigns", campaigns);
+		// 		const message_lists = [];
+		// 		for (campaignData of campaigns) {
+		// 			//getting sender, message, and receiver from campaign data {}
+		// 			const { number: sender, messageBody: message, contactList } = campaignData;
+		// 			// console.log("campaignData", { number: sender, messageBody: message, contactList });
+		// 			console.log("contactList", contactList);
+		// 			// getting receiver numbers from database { []; }
+		// 			const cursor = uploadExcelFileCollection.find({ _id: ObjectId(contactList) });
+		// 			const receiver = await cursor.toArray();
+		// 			console.log("receiver", receiver);
+		// 			//getting api data from database
+		// 			const smsApiData = await smsApiDataCollection.find({}).toArray();
+		// 			const client = new twilio(
+		// 				smsApiData[0].accountSID,
+		// 				smsApiData[0].authToken,
+		// 			);
+		// 			// console.log("smsApiData", smsApiData);
+		// 			const message_id = [];
+		// 			for (number of receiver.array) {
+		// 				await client.messages
+		// 					.create({
+		// 						body: message,
+		// 						to: number,
+		// 						from: sender,
+		// 					})
+		// 					.then((message) => {
+		// 						// console.log(message);
+		// 						if (message.sid) {
+		// 							message_id.push(message.sid);
+		// 						}
+		// 					});
+		// 			}
+		// 			message_lists.push(message_id);
+		// 		}
+		// 		res.json({
+		// 			status: 200,
+		// 			message: "Message Sent Successfully",
+		// 			messageIds: message_id,
+		// 		});
+		// 		console.log({
+		// 			status: 200,
+		// 			message: "Message Sent Successfully",
+		// 			messageIds: message_id,
+		// 		});
+		// 	} catch (error) {
+		// 		console.log(error);
+		// 		res.json({
+		// 			status: 400,
+		// 			message: "Message Sent Failed!" + " " + error.message,
+		// 			code: error.code,
+		// 		});
+		// 	}
+		// });
+
+
 		app.get("/corns/sms", async (req, res) => {
 			try {
-				//getting campaign data from database [{}]
 				const campaigns = await campaignCollection.find({}).toArray();
-				console.log("all campaigns", campaigns);
-				const message_lists = [];
+				const smsApiData = await smsApiDataCollection.find({}).toArray();
+				const client = new twilio(
+					smsApiData[0].accountSID,
+					smsApiData[0].authToken,
+				);
+				const message_id = [];
 				for (campaignData of campaigns) {
-					//getting sender, message, and receiver from campaign data {}
-					const { number: sender, messageBody: message, contactList } = campaignData;
-					console.log("campaignData", { number: sender, messageBody: message, contactList });
-					console.log("contactList", contactList);
-					//getting receiver numbers from database {[]}
-					const receiver = await uploadExcelFileCollection.find({ _id: ObjectId(contactList) });
-					console.log("receiver", receiver);
-					//getting api data from database
-					const smsApiData = await smsApiDataCollection.find({}).toArray();
-					const client = new twilio(
-						smsApiData[0].accountSID,
-						smsApiData[0].authToken,
-					);
-					console.log("smsApiData", smsApiData);
-					const message_id = [];
-					for (number of receiver.array) {
-						await client.messages
-							.create({
-								body: message,
-								to: number,
-								from: sender,
-							})
-							.then((message) => {
-								console.log(message);
-								if (message.sid) {
-									message_id.push(message.sid);
-								}
-							});
+					const { number: sender, messageBody: message, contactList, startDate } = campaignData;
+
+					if (startDate === date) {
+						const receiver = await uploadExcelFileCollection.find({ _id: ObjectId(contactList) }).toArray();
+						for (const r of receiver) {
+							for (const number of r?.array) {
+								console.log("number", number.mobile);
+								await client.messages.create({
+									body: message,
+									to: "+" + number.mobile,
+									from: sender,
+								}).then((message) => {
+									console.log(message);
+									if (message.sid) {
+										message_id.push(message.sid);
+									}
+								});
+							}
+						}
+					} else {
+
+						console.log('not toady', startDate, date);
 					}
-					message_lists.push(message_id);
 				}
 				res.json({
-					status: 200,
-					message: "Message Sent Successfully",
-					messageIds: message_id,
-				});
-				console.log({
 					status: 200,
 					message: "Message Sent Successfully",
 					messageIds: message_id,
