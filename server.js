@@ -22,10 +22,7 @@ const client = new MongoClient(uri, {
 app.post("/sms/send", async (req, res) => {
 	try {
 		const { sender, receiver, message } = req.body;
-		const client = new twilio(
-			process.env.ACCOUNT_SID,
-			process.env.AUTH_TOKEN,
-		);
+		const client = new twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
 		const message_id = [];
 		for (number of receiver) {
 			await client.messages
@@ -68,6 +65,7 @@ async function run() {
 		const campaignCollection = database.collection("campaignListData");
 		const usersDataCollections = database.collection("users");
 		const subscriptionListCollection = database.collection("subscriptionList");
+		const adminDataCollection = database.collection("adminList");
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
@@ -342,7 +340,7 @@ async function run() {
 			const user = req.body;
 			const d = new Date();
 			user["accountCreated"] = d.toDateString();
-			console.log(user);	
+			console.log(user);
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
 		});
@@ -386,11 +384,56 @@ async function run() {
 			}
 		});
 
-		// delete user to database
+		// delete user from database
 		app.delete("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: objectId(id) };
 			const result = await usersDataCollections.deleteOne(query);
+			res.json(result);
+		});
+
+		// add admin to database
+		app.post("/admins", async (req, res) => {
+			const data = req.body;
+			const result = await adminDataCollection.insertOne(data);
+			res.json(result);
+		});
+
+		// get all admin data data from database
+		app.get("/admins", async (req, res) => {
+			const cursor = adminDataCollection.find({});
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
+		// update admin to database
+		app.put("/admins/:id", async (req, res) => {
+			const id = req.params.id;
+			const updatedEmail = req.body;
+			const filter = { _id: objectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					email: updatedEmail.email,
+				},
+			};
+			const result = await adminDataCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			if (result) {
+				const cursor = adminDataCollection.find({});
+				const adminData = await cursor.toArray();
+				res.json({ ...result, data: adminData });
+			}
+		});
+
+		// delete admin from database
+		app.delete("/admins/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: objectId(id) };
+			const result = await adminDataCollection.deleteOne(query);
 			res.json(result);
 		});
 
