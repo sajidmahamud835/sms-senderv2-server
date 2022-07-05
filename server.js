@@ -18,43 +18,6 @@ const client = new MongoClient(uri, {
 	useUnifiedTopology: true,
 	serverApi: ServerApiVersion.v1,
 });
-//Send SMS
-app.post("/sms/send", async (req, res) => {
-	try {
-		const { sender, receiver, message } = req.body;
-		const client = new twilio(
-			process.env.ACCOUNT_SID,
-			process.env.AUTH_TOKEN,
-		);
-		const message_id = [];
-		for (number of receiver) {
-			await client.messages
-				.create({
-					body: message,
-					to: number,
-					from: sender,
-				})
-				.then((message) => {
-					console.log(message);
-					if (message.sid) {
-						message_id.push(message.sid);
-					}
-				});
-		}
-		res.json({
-			status: 200,
-			message: "Message Sent Successfully",
-			messageIds: message_id,
-		});
-	} catch (error) {
-		console.log(error);
-		res.json({
-			status: 400,
-			message: "Message Sent Failed!" + " " + error.message,
-			code: error.code,
-		});
-	}
-});
 
 // MongoDB database
 async function run() {
@@ -68,6 +31,46 @@ async function run() {
 		const campaignCollection = database.collection("campaignListData");
 		const usersDataCollections = database.collection("users");
 		const subscriptionListCollection = database.collection("subscriptionList");
+
+		//Send SMS
+		app.post("/sms/send", async (req, res) => {
+			try {
+				const { sender, receiver, message } = req.body;
+				const cursor = smsApiDataCollection.find({});
+				const smsApiData = await cursor.toArray();
+				const client = new twilio(
+					smsApiData[0].accountSID,
+					smsApiData[0].authToken,
+				);
+				const message_id = [];
+				for (number of receiver) {
+					await client.messages
+						.create({
+							body: message,
+							to: number,
+							from: sender,
+						})
+						.then((message) => {
+							console.log(message);
+							if (message.sid) {
+								message_id.push(message.sid);
+							}
+						});
+				}
+				res.json({
+					status: 200,
+					message: "Message Sent Successfully",
+					messageIds: message_id,
+				});
+			} catch (error) {
+				console.log(error);
+				res.json({
+					status: 400,
+					message: "Message Sent Failed!" + " " + error.message,
+					code: error.code,
+				});
+			}
+		});
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
