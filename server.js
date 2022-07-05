@@ -319,7 +319,7 @@ async function run() {
 			res.send(usersDataList);
 		});
 
-		// get users from database
+		// get single user from database by id
 		app.get("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { id: id };
@@ -328,9 +328,21 @@ async function run() {
 			res.send(result);
 		});
 
+		// get single user from database by email
+		app.get("/users/email/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
+			const cursor = usersDataCollections.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
 		// add users to database
 		app.post("/users", async (req, res) => {
 			const user = req.body;
+			const d = new Date();
+			user["accountCreated"] = d.toDateString();
+			console.log(user);	
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
 		});
