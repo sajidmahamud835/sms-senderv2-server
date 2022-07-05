@@ -19,9 +19,11 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1,
 });
 
+
 //date
 const today = new Date();
 const date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-0' + today.getDate();
+
 
 // MongoDB database
 async function run() {
@@ -35,6 +37,7 @@ async function run() {
 		const campaignCollection = database.collection("campaignListData");
 		const usersDataCollections = database.collection("users");
 		const subscriptionListCollection = database.collection("subscriptionList");
+		const adminDataCollection = database.collection("adminList");
 
 		//Send SMS
 		app.post("/sms/send", async (req, res) => {
@@ -437,7 +440,7 @@ async function run() {
 			res.send(usersDataList);
 		});
 
-		// get users from database
+		// get single user from database by id
 		app.get("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { id: id };
@@ -446,9 +449,21 @@ async function run() {
 			res.send(result);
 		});
 
+		// get single user from database by email
+		app.get("/users/email/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
+			const cursor = usersDataCollections.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
 		// add users to database
 		app.post("/users", async (req, res) => {
 			const user = req.body;
+			const d = new Date();
+			user["accountCreated"] = d.toDateString();
+			console.log(user);
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
 		});
@@ -492,11 +507,56 @@ async function run() {
 			}
 		});
 
-		// delete user to database
+		// delete user from database
 		app.delete("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: objectId(id) };
 			const result = await usersDataCollections.deleteOne(query);
+			res.json(result);
+		});
+
+		// add admin to database
+		app.post("/admins", async (req, res) => {
+			const data = req.body;
+			const result = await adminDataCollection.insertOne(data);
+			res.json(result);
+		});
+
+		// get all admin data data from database
+		app.get("/admins", async (req, res) => {
+			const cursor = adminDataCollection.find({});
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
+		// update admin to database
+		app.put("/admins/:id", async (req, res) => {
+			const id = req.params.id;
+			const updatedEmail = req.body;
+			const filter = { _id: objectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					email: updatedEmail.email,
+				},
+			};
+			const result = await adminDataCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			if (result) {
+				const cursor = adminDataCollection.find({});
+				const adminData = await cursor.toArray();
+				res.json({ ...result, data: adminData });
+			}
+		});
+
+		// delete admin from database
+		app.delete("/admins/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: objectId(id) };
+			const result = await adminDataCollection.deleteOne(query);
 			res.json(result);
 		});
 
