@@ -72,6 +72,65 @@ async function run() {
 			}
 		});
 
+		//campaign corn jobs
+		app.get("/corns/sms", async (req, res) => {
+			try {
+				//getting campaign data from database [{}]
+				const campaigns = await campaignCollection.find({}).toArray();
+				console.log("all campaigns", campaigns);
+				const message_lists = [];
+				for (campaignData of campaigns) {
+					//getting sender, message, and receiver from campaign data {}
+					const { number: sender, messageBody: message, contactList } = campaignData;
+					console.log("campaignData", { number: sender, messageBody: message, contactList });
+					console.log("contactList", contactList);
+					//getting receiver numbers from database {[]}
+					const receiver = await uploadExcelFileCollection.find({ _id: ObjectId(contactList) });
+					console.log("receiver", receiver);
+					//getting api data from database
+					const smsApiData = await smsApiDataCollection.find({}).toArray();
+					const client = new twilio(
+						smsApiData[0].accountSID,
+						smsApiData[0].authToken,
+					);
+					console.log("smsApiData", smsApiData);
+					const message_id = [];
+					for (number of receiver.array) {
+						await client.messages
+							.create({
+								body: message,
+								to: number,
+								from: sender,
+							})
+							.then((message) => {
+								console.log(message);
+								if (message.sid) {
+									message_id.push(message.sid);
+								}
+							});
+					}
+					message_lists.push(message_id);
+				}
+				res.json({
+					status: 200,
+					message: "Message Sent Successfully",
+					messageIds: message_id,
+				});
+				console.log({
+					status: 200,
+					message: "Message Sent Successfully",
+					messageIds: message_id,
+				});
+			} catch (error) {
+				console.log(error);
+				res.json({
+					status: 400,
+					message: "Message Sent Failed!" + " " + error.message,
+					code: error.code,
+				});
+			}
+		});
+
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
 			const log = {
@@ -242,6 +301,7 @@ async function run() {
 			const cursor = uploadExcelFileCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
+
 		});
 
 		// Get Uploaded single Excel File
