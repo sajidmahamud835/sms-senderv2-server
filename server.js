@@ -19,11 +19,10 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1,
 });
 
-
 //date
 const today = new Date();
-const date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-0' + today.getDate();
-
+const date =
+	today.getFullYear() + "-0" + (today.getMonth() + 1) + "-0" + today.getDate();
 
 // MongoDB database
 async function run() {
@@ -47,7 +46,7 @@ async function run() {
 				const smsApiData = await cursor.toArray();
 				const client = new twilio(
 					smsApiData[0].accountSID,
-					smsApiData[0].authToken,
+					smsApiData[0].authToken
 				);
 				const message_id = [];
 				for (number of receiver) {
@@ -139,39 +138,45 @@ async function run() {
 		// 	}
 		// });
 
-
 		app.get("/corns/sms", async (req, res) => {
 			try {
 				const campaigns = await campaignCollection.find({}).toArray();
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
 				const client = new twilio(
 					smsApiData[0].accountSID,
-					smsApiData[0].authToken,
+					smsApiData[0].authToken
 				);
 				const message_id = [];
 				for (campaignData of campaigns) {
-					const { number: sender, messageBody: message, contactList, startDate } = campaignData;
-
+					const {
+						number: sender,
+						messageBody: message,
+						contactList,
+						startDate,
+					} = campaignData;
 					if (startDate === date) {
-						const receiver = await uploadExcelFileCollection.find({ _id: ObjectId(contactList) }).toArray();
+						const receiver = await uploadExcelFileCollection
+							.find({ _id: ObjectId(contactList) })
+							.toArray();
 						for (const r of receiver) {
 							for (const number of r?.array) {
 								console.log("number", number.mobile);
-								await client.messages.create({
-									body: message,
-									to: "+" + number.mobile,
-									from: sender,
-								}).then((message) => {
-									console.log(message);
-									if (message.sid) {
-										message_id.push(message.sid);
-									}
-								});
+								await client.messages
+									.create({
+										body: message,
+										to: "+" + number.mobile,
+										from: sender,
+									})
+									.then((message) => {
+										console.log(message);
+										if (message.sid) {
+											message_id.push(message.sid);
+										}
+									});
 							}
 						}
 					} else {
-
-						console.log('not toady', startDate, date);
+						console.log("not toady", startDate, date);
 					}
 				}
 				res.json({
@@ -359,18 +364,39 @@ async function run() {
 			const cursor = uploadExcelFileCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
-
 		});
 
-		// Get Uploaded single Excel File
+		// Get single campaign details
 		app.get("/campaign-details/:id", async (req, res) => {
 			const id = req.params.id;
-
 			const query = { _id: ObjectId(id) };
 			console.log(query);
 			const cursor = campaignCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
+		});
+
+		// Update single campaign details
+		app.put("/campaign-details/:id", async (req, res) => {
+			const id = req.params.id;
+			const updateStatus = req.body;
+			const filter = { _id: objectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					status: updateStatus.status,
+				},
+			};
+			const result = await campaignCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			if (result) {
+				const cursor = campaignCollection.find({});
+				const campaignData = await cursor.toArray();
+				res.json({ ...result, data: campaignData });
+			}
 		});
 
 		// Post Upload Excel File
