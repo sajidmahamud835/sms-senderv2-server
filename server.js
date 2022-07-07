@@ -11,6 +11,8 @@ require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
+//use uuidv4 to generate unique id
+const { v4: uuidv4 } = require('uuid');
 
 const uri = `mongodb+srv://smsApiUser:$W.i23h-RQ_j2NA@cluster0.i1abc.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -484,11 +486,13 @@ async function run() {
 			res.send(result);
 		});
 
+
 		// add users to database
 		app.post("/users", async (req, res) => {
 			const user = req.body;
 			const d = new Date();
 			user["accountCreated"] = d.toDateString();
+			user["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
 			console.log(user);
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
