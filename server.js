@@ -491,7 +491,8 @@ async function run() {
 		app.post("/users", async (req, res) => {
 			const user = req.body;
 			const d = new Date();
-			user["accountCreated"] = d.toDateString();
+			user["accountCreated"] = d.toDateString(); // add current date to user object
+			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
 			user["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
 			console.log(user);
 			const usersData = await usersDataCollections.insertOne(user);
