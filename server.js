@@ -39,6 +39,7 @@ async function run() {
 		const usersDataCollections = database.collection("users");
 		const subscriptionListCollection = database.collection("subscriptionList");
 		const adminDataCollection = database.collection("adminList");
+		const MessageTemplates = database.collection("templates");
 
 		//Send SMS
 		app.post("/sms/send", async (req, res) => {
@@ -81,64 +82,6 @@ async function run() {
 		});
 
 		//campaign corn jobs
-		// app.get("/corns/sms", async (req, res) => {
-		// 	try {
-		// 		//getting campaign data from database [{}]
-		// 		const campaigns = await campaignCollection.find({}).toArray();
-		// 		// console.log("all campaigns", campaigns);
-		// 		const message_lists = [];
-		// 		for (campaignData of campaigns) {
-		// 			//getting sender, message, and receiver from campaign data {}
-		// 			const { number: sender, messageBody: message, contactList } = campaignData;
-		// 			// console.log("campaignData", { number: sender, messageBody: message, contactList });
-		// 			console.log("contactList", contactList);
-		// 			// getting receiver numbers from database { []; }
-		// 			const cursor = uploadExcelFileCollection.find({ _id: ObjectId(contactList) });
-		// 			const receiver = await cursor.toArray();
-		// 			console.log("receiver", receiver);
-		// 			//getting api data from database
-		// 			const smsApiData = await smsApiDataCollection.find({}).toArray();
-		// 			const client = new twilio(
-		// 				smsApiData[0].accountSID,
-		// 				smsApiData[0].authToken,
-		// 			);
-		// 			// console.log("smsApiData", smsApiData);
-		// 			const message_id = [];
-		// 			for (number of receiver.array) {
-		// 				await client.messages
-		// 					.create({
-		// 						body: message,
-		// 						to: number,
-		// 						from: sender,
-		// 					})
-		// 					.then((message) => {
-		// 						// console.log(message);
-		// 						if (message.sid) {
-		// 							message_id.push(message.sid);
-		// 						}
-		// 					});
-		// 			}
-		// 			message_lists.push(message_id);
-		// 		}
-		// 		res.json({
-		// 			status: 200,
-		// 			message: "Message Sent Successfully",
-		// 			messageIds: message_id,
-		// 		});
-		// 		console.log({
-		// 			status: 200,
-		// 			message: "Message Sent Successfully",
-		// 			messageIds: message_id,
-		// 		});
-		// 	} catch (error) {
-		// 		console.log(error);
-		// 		res.json({
-		// 			status: 400,
-		// 			message: "Message Sent Failed!" + " " + error.message,
-		// 			code: error.code,
-		// 		});
-		// 	}
-		// });
 
 		app.get("/corns/sms", async (req, res) => {
 			try {
@@ -196,6 +139,60 @@ async function run() {
 			}
 		});
 
+
+
+		// get message templates
+		app.get('/templates', async (req, res) => {
+			const templates = await MessageTemplates.find({}).toArray()
+			res.send(templates)
+		})
+
+		//post  message templates
+		app.post('/templates', async (req, res) => {
+			const data = req.body;
+			const result = await MessageTemplates.insertOne(data)
+			res.json(result);
+		})
+
+		//update message templates
+		
+		app.put('/templates/:id', async (req, res) => {
+			const id = req.params.id;
+			const updatedMessage = req.body;
+			const filter = { _id: objectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					title: updatedMessage.title,
+					message: updatedMessage.message
+				},
+			};
+			const result = await MessageTemplates.updateOne( filter, updateDoc, options);
+			if (result) {
+				const cursor = MessageTemplates.find({});
+				const template = await cursor.toArray();
+				res.json({ ...result, data: template });
+			}
+		})
+
+		// delete message templates
+		
+		app.delete('/templates/:id', async (req, res) => {
+			const id = req.params.id;
+			console.log(id);
+			const query = { _id: objectId(id) };
+			const result = await MessageTemplates.deleteOne(query);
+			res.json(result);
+		})
+
+
+
+
+
+
+
+
+
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
 			const log = {
@@ -229,6 +226,7 @@ async function run() {
 			const updatedNumber = req.body;
 			const filter = { _id: objectId(id) };
 			const options = { upsert: true };
+			console.log(updatedNumber);
 			const updateDoc = {
 				$set: {
 					number: updatedNumber.number,
