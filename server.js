@@ -155,7 +155,7 @@ async function run() {
 		})
 
 		//update message templates
-		
+
 		app.put('/templates/:id', async (req, res) => {
 			const id = req.params.id;
 			const updatedMessage = req.body;
@@ -167,7 +167,7 @@ async function run() {
 					message: updatedMessage.message
 				},
 			};
-			const result = await MessageTemplates.updateOne( filter, updateDoc, options);
+			const result = await MessageTemplates.updateOne(filter, updateDoc, options);
 			if (result) {
 				const cursor = MessageTemplates.find({});
 				const template = await cursor.toArray();
@@ -176,7 +176,7 @@ async function run() {
 		})
 
 		// delete message templates
-		
+
 		app.delete('/templates/:id', async (req, res) => {
 			const id = req.params.id;
 			console.log(id);
@@ -483,6 +483,26 @@ async function run() {
 			const result = await cursor.toArray();
 			res.send(result);
 		});
+
+		// post user to database using email
+		app.post("/users/complete", async (req, res) => {
+			const data = req.body;
+			const email = data.email;
+			const query = { email: email }; // query to find user by email
+			const options = { upsert: true }; // if user not found then create new user
+			const updateDoc = {
+				$set: {
+					...data,
+				},
+			};
+			const result = await usersDataCollections.updateOne(
+				query,
+				updateDoc,
+				options
+			);
+			res.json(result);
+		});
+
 
 
 		// add users to database
