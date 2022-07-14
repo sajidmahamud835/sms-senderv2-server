@@ -139,6 +139,30 @@ async function run() {
 			}
 		});
 
+		// Get all SMS logs from twailio
+		app.get("/sms/logs", async (req, res) => {
+			try {
+				const smsApiData = await smsApiDataCollection.find({}).toArray();
+				const client = new twilio(
+					smsApiData[0].accountSID,
+					smsApiData[0].authToken
+				);
+				const messages = await client.messages.list();
+				res.json({
+					status: 200,
+					message: "Message Sent Successfully",
+					messages: messages,
+				});
+			} catch (error) {
+				console.log(error);
+				res.json({
+					status: 400,
+					message: "Message Sent Failed!" + " " + error.message,
+					code: error.code,
+				});
+			}
+		});
+
 
 
 		// get message templates
