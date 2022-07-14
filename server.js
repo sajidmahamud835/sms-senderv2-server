@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const jwt = require('jsonwebtoken');
 const cors = require("cors");
 const port = process.env.PORT || 4000;
 const twilio = require("twilio");
@@ -26,6 +27,23 @@ const today = new Date();
 const date =
 	today.getFullYear() + "-0" + (today.getMonth() + 1) + "-0" + today.getDate();
 
+
+// JWT token verification function
+function verifyJWT(req, res, next) {
+	const authHeader = req.headers.authorization;
+	if (!authHeader) {
+		return res.status(401).send({ message: 'UnAuthorized access' });
+	}
+	const token = authHeader.split(' ')[1];
+	jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+		if (err) {
+			return res.status(403).send({ message: 'Forbidden access' });
+		}
+		req.decoded = decoded;
+		next();
+	});
+}
+
 // MongoDB database
 async function run() {
 	try {
@@ -40,6 +58,7 @@ async function run() {
 		const subscriptionListCollection = database.collection("subscriptionList");
 		const adminDataCollection = database.collection("adminList");
 		const MessageTemplates = database.collection("templates");
+		const userCollection = database.collection("users");
 
 		//Send SMS
 		app.post("/sms/send", async (req, res) => {
@@ -79,6 +98,20 @@ async function run() {
 					code: error.code,
 				});
 			}
+		});
+
+		// setting JWT
+		app.put('/user/:email', async (req, res) => {
+			const email = req.params.email;
+			const user = req.body;
+			const filter = { email: email };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: user,
+			};
+			const result = await userCollection.updateOne(filter, updateDoc, options);
+			const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET);
+			res.send({ result, token });
 		});
 
 		//campaign corn jobs
@@ -139,7 +172,7 @@ async function run() {
 			}
 		});
 
-		// Get all SMS logs from twailio
+		// Get all SMS logs from twailio	
 		app.get("/sms/logs", async (req, res) => {
 			try {
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
@@ -163,20 +196,18 @@ async function run() {
 			}
 		});
 
-
-
 		// get message templates
 		app.get('/templates', async (req, res) => {
-			const templates = await MessageTemplates.find({}).toArray()
-			res.send(templates)
-		})
+			const templates = await MessageTemplates.find({}).toArray();
+			res.send(templates);
+		});
 
 		//post  message templates
 		app.post('/templates', async (req, res) => {
 			const data = req.body;
-			const result = await MessageTemplates.insertOne(data)
+			const result = await MessageTemplates.insertOne(data);
 			res.json(result);
-		})
+		});
 
 		//update message templates
 
@@ -197,7 +228,7 @@ async function run() {
 				const template = await cursor.toArray();
 				res.json({ ...result, data: template });
 			}
-		})
+		});
 
 		// delete message templates
 
@@ -207,15 +238,7 @@ async function run() {
 			const query = { _id: objectId(id) };
 			const result = await MessageTemplates.deleteOne(query);
 			res.json(result);
-		})
-
-
-
-
-
-
-
-
+		});
 
 		// get all mobile number data
 		app.get("/smsApi/numbers", async (req, res) => {
@@ -508,9 +531,16 @@ async function run() {
 			res.send(result);
 		});
 
+
 		// post user to database using email
 		app.post("/users/complete", async (req, res) => {
 			const data = req.body;
+			if (!data.imageUrl) {
+				data["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
+			}
+			if (!data.id) {
+				data["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
+			}
 			const email = data.email;
 			const query = { email: email }; // query to find user by email
 			const options = { upsert: true }; // if user not found then create new user
@@ -527,13 +557,12 @@ async function run() {
 			res.json(result);
 		});
 
-
-
 		// add users to database
 		app.post("/users", async (req, res) => {
 			const user = req.body;
 			const d = new Date();
-			user["accountCreated"] = d.toDateString(); // add current date to user object
+			user["accountCreated"] = d.toDateString();
+			// add current date to user object	
 			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
 			user["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
 			console.log(user);
