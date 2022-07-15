@@ -209,10 +209,6 @@ async function run() {
 			}
 		});
 
-<<<<<<< HEAD
-
-=======
->>>>>>> fbb11db156bca27a083eba46e855a29abc0b8ba1
 		// get message templates
 		app.get('/templates', async (req, res) => {
 			const templates = await MessageTemplates.find({}).toArray();
