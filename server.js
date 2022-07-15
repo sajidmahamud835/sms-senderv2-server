@@ -409,8 +409,7 @@ async function run() {
 		});
 
 		// Get Upload Excel File
-		app.get("/upload-excel-file/:email", async (req, res) => {
-			const email = req.query.email;
+		app.get("/upload-excel-file/", async (req, res) => {
 			const query = {};
 			const cursor = uploadExcelFileCollection.find(query);
 			const uploadExcelFileData = await cursor.toArray();
