@@ -55,7 +55,7 @@ async function run() {
         const getTwilioApi = async () => {
             const twilioApi = await twilioApiCollection.findOne({});
             return twilioApi;
-        }
+        };
 
         //fuction to initialize twilio api with twilioApiCollection in mongo db and set it to global variable twilioApi to use it in other functions.
         const initTwilioApi = async () => {
@@ -67,12 +67,12 @@ async function run() {
                     accountSID: process.env.TWILIO_ACCOUNT_SID,
                     authToken: process.env.TWILIO_AUTH_TOKEN,
                     twilioNumbers: [process.env.TWILIO_NUMBER],
-                }
+                };
                 // insert twilio api to mongo db from env variables 
                 await twilioApiCollection.insertOne(twilioApi);
                 return twilioApi;
             }
-        }
+        };
 
         //run initTwilioApi function to initialize twilio api
         const twilioApi = await initTwilioApi();
@@ -146,7 +146,7 @@ async function run() {
                     //     smsLogName: 'smsLogName',
                     // },
                 ],
-            }
+            };
             await userCollection.insertOne(user); // insert user to mongo db
             console.log('User initialized');
             console.log(user);
@@ -165,7 +165,7 @@ async function run() {
                 subscriptionStatus: 'active',
                 subscriptionCreated: new Date(),
                 subscriptionUpdated: new Date(),
-            }
+            };
             await subscriptionCollection.insertOne(subscription); // insert subscription to mongo db
             console.log('Subscription initialized');
             console.log(subscription);
@@ -184,7 +184,7 @@ async function run() {
                 campaignStatus: 'active',
                 campaignCreated: new Date(),
                 campaignUpdated: new Date(),
-            }
+            };
             await campaignCollection.insertOne(campaign); // insert campaign to mongo db
             console.log('Campaign initialized');
             console.log(campaign);
@@ -204,7 +204,7 @@ async function run() {
                 messageTemplateCreated: new Date(),
                 messageTemplateUpdated: new Date(),
                 messageTemplateContent: 'messageTemplateContent',
-            }
+            };
             await messageTemplateCollection.insertOne(messageTemplate); // insert message template to mongo db
             console.log('Message template initialized');
             console.log(messageTemplate);
@@ -226,7 +226,7 @@ async function run() {
                 smsLogCreated: new Date(),
                 smsLogUpdated: new Date(),
                 userName: userCollection.findOne({}).userName,
-            }
+            };
             await smsLogCollection.insertOne(smsLog); // insert sms log to mongo db
             console.log('Sms log initialized');
             console.log(smsLog);
@@ -247,13 +247,13 @@ async function run() {
         const getUser = async (userName) => {
             const user = await userCollection.findOne({ userName: userName });
             return user;
-        }
+        };
 
         // get all users from mongo db
         const getAllUsers = async () => {
             const users = await userCollection.find({}).toArray();
             return users;
-        }
+        };
 
         // create user with unique userName
         const createUser = async (user) => {
@@ -269,26 +269,26 @@ async function run() {
                 return {
                     status: 'error',
                     message: 'User already exists',
-                }
+                };
             } else if (emailExists) {
                 return {
                     status: 'error',
                     message: 'Email already exists',
-                }
+                };
             } else if (phoneNumberExists) {
                 return {
                     status: 'error',
                     message: 'Phone number already exists',
-                }
+                };
             }
             else {
                 await userCollection.insertOne(user);
                 return {
                     status: 'success',
                     message: 'User created',
-                }
+                };
             }
-        }
+        };
 
         // update user by user name
         const updateUser = async (user) => {
@@ -301,15 +301,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'User updated',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
         // delete user by user name
         const deleteUser = async (userName) => {
@@ -319,32 +319,32 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'User deleted',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
         // get user by email address
         const getUserByEmail = async (email) => {
             const user = await userCollection.findOne({ email: email });
             return user;
-        }
+        };
         // get user by mobileNumber
         const getUserByMobileNumber = async (mobileNumber) => {
             const user = await userCollection.findOne({ mobileNumber: mobileNumber });
             return user;
-        }
+        };
 
         // get user by role 
         const getUserByRole = async (userType) => {
             const user = await userCollection.findOne({ userType: userType });
             return user;
-        }
+        };
 
         //update user role by user name
         const updateUserRole = async (userName, userType) => {
@@ -354,15 +354,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'User role updated',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
         //update user subscription by user name
         const updateUserSubscription = async (userName, subscriptionId) => {
@@ -372,15 +372,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'User subscription updated',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
 
         //add data to message templates array of user by user name
@@ -392,15 +392,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'Message template added to user',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
         //remove data from message templates array of user by user name (BETA)
         const removeMessageTemplateFromUser = async (userName, messageTemplate) => {
@@ -411,15 +411,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'Message template removed from user',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
         //add data to contact lists array of user by user name (BETA)
         const addContactListToUser = async (userName, contactList) => {
@@ -430,15 +430,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'Contact list added to user',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
         //remove data from contact lists array of user by user name (BETA)
         const removeContactListFromUser = async (userName, contactList) => {
@@ -449,15 +449,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'Contact list removed from user',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'User does not exist',
-                }
+                };
             }
-        }
+        };
 
 
         //curd operations for user 
@@ -476,7 +476,7 @@ async function run() {
             removeMessageTemplateFromUser: removeMessageTemplateFromUser, //remove data from message templates array of user by user name (BETA)
             addContactListToUser: addContactListToUser, //add data to contact lists array of user by user name (BETA)
             removeContactListFromUser: removeContactListFromUser, //remove data from contact lists array of user by user name (BETA)
-        }
+        };
 
         //post user using userCurd
         app.post('/api/user', async (req, res) => {
@@ -568,13 +568,13 @@ async function run() {
         const getSms = async (smsId) => {
             const sms = await smsLogCollection.findOne({ smsId: smsId });
             return sms;
-        }
+        };
 
         // get all sms
         const getAllSms = async () => {
             const sms = await smsLogCollection.find({}).toArray();
             return sms;
-        }
+        };
 
         // create sms
         const createSms = async (sms) => {
@@ -592,9 +592,9 @@ async function run() {
             return {
                 status: 'success',
                 message: 'SMS created',
-            }
+            };
 
-        }
+        };
 
         // update sms
         const updateSms = async (sms) => {
@@ -605,15 +605,15 @@ async function run() {
                 return {
                     status: 'success',
                     message: 'SMS updated',
-                }
+                };
             }
             else {
                 return {
                     status: 'error',
                     message: 'SMS does not exist',
-                }
+                };
             }
-        }
+        };
 
         // delete sms log older than 3 months
         const deleteSms = async () => {
@@ -641,13 +641,13 @@ async function run() {
 
                 }
             }
-        }
+        };
 
         // get sms by userName
         const getSmsByUserName = async (userName) => {
             const sms = await smsLogCollection.find({ userName: userName }).toArray();
             return sms;
-        }
+        };
 
         //count sms by userName and set sms count in user
         const countSmsByUserName = async (userName) => { //userName is userId
@@ -655,32 +655,32 @@ async function run() {
             const user = await getUser(userName);
             user.smsCount = sms.length;
             await updateUser(user);
-        }
+        };
 
         // get sms by smsId
         const getSmsBySmsId = async (smsId) => {
             const sms = await smsLogCollection.findOne({ smsId: smsId });
             return sms;
-        }
+        };
 
         // get sms by current date
         const getSmsByCurrentDate = async (date) => {
             const sms = await smsLogCollection.find({ smsDate: date }).toArray();
             return sms;
-        }
+        };
 
         // get sms by current date and userName
         const getSmsByCurrentDateAndUserName = async (date, userName) => {
             const sms = await smsLogCollection.find({ smsDate: date, userName: userName }).toArray();
             return sms;
-        }
+        };
 
         // get all sms logs from twillio api
         const getAllSmsLogs = async () => {
             //use twilio api to get all sms logs
             const smsLogs = await twilioClient.messages.list();
             return smsLogs;
-        }
+        };
 
         // send sms using twilio api
         const sendSms = async (sms) => {
@@ -704,7 +704,7 @@ async function run() {
             });
             console.log(smsLog);
             return twilioMessage;
-        }
+        };
 
         // sendMultipleSms using twilio api
         const sendMultipleSms = async (sms) => {
@@ -722,7 +722,7 @@ async function run() {
                 twilioMessages.push(twilioMessage); // push twilio message to array
             }
             return twilioMessages;
-        }
+        };
 
         //curd operations for sms
         const smsCurd = {
@@ -739,7 +739,7 @@ async function run() {
             getAllSmsLogs: getAllSmsLogs, //get all sms logs from twillio api
             sendSms: sendSms, //send sms using twilio api
             sendMultipleSms: sendMultipleSms, //sendMultipleSms using twilio api
-        }
+        };
 
         // get sms by userName using smsCurd
         app.get('/api/sms/userName/:userName', async (req, res) => {

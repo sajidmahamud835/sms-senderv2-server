@@ -42,6 +42,7 @@ console.log(dateNumber);
 // JWT token verification function
 function verifyJWT(req, res, next) {
 	const authHeader = req.headers.authorization;
+	console.log(authHeader);
 	if (!authHeader) {
 		return res.status(401).send({ message: 'UnAuthorized access' });
 	}
@@ -210,7 +211,7 @@ async function run() {
 		});
 
 		// get message templates
-		app.get('/templates', async (req, res) => {
+		app.get('/templates', verifyJWT, async (req, res) => {
 			const templates = await MessageTemplates.find({}).toArray();
 			res.send(templates);
 		});
