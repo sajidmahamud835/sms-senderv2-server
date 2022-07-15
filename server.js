@@ -25,6 +25,17 @@ const client = new MongoClient(uri, {
 const today = new Date();
 const date =
 	today.getFullYear() + "-0" + (today.getMonth() + 1) + "-0" + today.getDate();
+//time
+const time =
+	today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+const dateTime = date + " " + time;
+console.log(dateTime);
+
+//date and time to number
+const dateToNumber = new Date(dateTime);
+const dateNumber = dateToNumber.getTime();
+console.log(dateNumber);
+
 
 // MongoDB database
 async function run() {
@@ -99,7 +110,9 @@ async function run() {
 						contactList,
 						startDate,
 					} = campaignData;
-					if (startDate === date) {
+					startDate = new Date(startDate); //convert startDate to date
+					const currentDate = new Date(); //get current date
+					if (currentDate >= startDate) { //if current date is greater than start date
 						const receiver = await uploadExcelFileCollection
 							.find({ _id: ObjectId(contactList) })
 							.toArray();
@@ -139,6 +152,7 @@ async function run() {
 			}
 		});
 
+
 		// Get all SMS logs from twailio
 		app.get("/sms/logs", async (req, res) => {
 			try {
@@ -162,7 +176,6 @@ async function run() {
 				});
 			}
 		});
-
 
 
 		// get message templates
@@ -208,13 +221,6 @@ async function run() {
 			const result = await MessageTemplates.deleteOne(query);
 			res.json(result);
 		})
-
-
-
-
-
-
-
 
 
 		// get all mobile number data
@@ -373,9 +379,9 @@ async function run() {
 		});
 
 		// Get Upload Excel File
-		app.get("/upload-excel-file", async (req, res) => {
+		app.get("/upload-excel-file/:email", async (req, res) => {
 			const email = req.query.email;
-			const query = { email: email };
+			const query = {};
 			const cursor = uploadExcelFileCollection.find(query);
 			const uploadExcelFileData = await cursor.toArray();
 			res.send(uploadExcelFileData);
@@ -389,6 +395,27 @@ async function run() {
 			const result = await cursor.toArray();
 			res.send(result);
 		});
+
+		// count active, inactive, draft campaigns
+		app.get("/campaigns/count", async (req, res) => {
+			const cursor = campaignCollection.find({});
+			const campaignData = await cursor.toArray();
+			const activeCampaigns = campaignData.filter(
+				(campaign) => campaign.status === "Active"
+			);
+			const inactiveCampaigns = campaignData.filter(
+				(campaign) => campaign.status === "Scheduled"
+			);
+			const draftCampaigns = campaignData.filter(
+				(campaign) => campaign.status === "Draft"
+			);
+			res.json({
+				activeCampaigns: activeCampaigns.length,
+				scheduledCampaigns: inactiveCampaigns.length,
+				draftCampaigns: draftCampaigns.length,
+			});
+		}
+		);
 
 		// Get single campaign details
 		app.get("/campaign-details/:id", async (req, res) => {
@@ -488,6 +515,21 @@ async function run() {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
+		});
+
+		// get number of active and inactive users
+		app.get("/users-count", async (req, res) => {
+			const cursor = usersDataCollections.find({});
+			const usersDataList = await cursor.toArray();
+			const activeUsers = usersDataList.filter(
+				(user) => user.isActiveUser === "yes" // filter active users
+			);
+			const inactiveUsers = usersDataList.filter(
+				(user) => user.isActiveUser === "no" // filter inactive users
+			);
+			activeUsersCount = activeUsers.length;
+			inactiveUsersCount = inactiveUsers.length;
+			res.send({ activeUsersCount, inactiveUsersCount });
 		});
 
 		// get single user from database by id
