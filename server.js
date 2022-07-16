@@ -63,7 +63,7 @@ async function run() {
 		const smsApiDataCollection = database.collection("smsApi");
 		const mobileNumberDataCollection = database.collection("mobileNumberData");
 		const csvFileDataCollection = database.collection("csvFileData");
-		const uploadExcelFileCollection = database.collection("uploadExcelFile");
+		const contactsCollection = database.collection("uploadExcelFile");
 		const campaignCollection = database.collection("campaignListData");
 		const usersDataCollections = database.collection("users");
 		const subscriptionListCollection = database.collection("subscriptionList");
@@ -127,7 +127,7 @@ async function run() {
 
 		//campaign corn jobs
 
-		app.get("/corns/sms", async (req, res) => {
+		app.get("/corns/campaign", async (req, res) => {
 			try {
 				const campaigns = await campaignCollection.find({}).toArray();
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
@@ -146,7 +146,7 @@ async function run() {
 					startDate = new Date(startDate); //convert startDate to date
 					const currentDate = new Date(); //get current date
 					if (currentDate >= startDate) { //if current date is greater than start date
-						const receiver = await uploadExcelFileCollection
+						const receiver = await contactsCollection
 							.find({ _id: ObjectId(contactList) })
 							.toArray();
 						for (const r of receiver) {
@@ -262,13 +262,11 @@ async function run() {
 				statusCode: req.statusCode,
 				statusMessage: req.statusMessage,
 			};
-			// console.log("/smsApi/numbers - request", log);
 
 			const cursor = mobileNumberDataCollection.find({});
 			const mobileNumberData = await cursor.toArray();
 			res.send(mobileNumberData);
 
-			// console.log("/smsApi/numbers - response", mobileNumberData);
 		});
 
 		// update mobile number data
@@ -280,7 +278,6 @@ async function run() {
 				statusCode: req.statusCode,
 				statusMessage: req.statusMessage,
 			};
-			// console.log("/smsApi/numbers/:id - request", log);
 
 			const id = req.params.id;
 			const updatedNumber = req.body;
@@ -303,7 +300,6 @@ async function run() {
 				res.json({ ...result, data: mobileNumberData });
 			}
 
-			// console.log("/smsApi/numbers/:id - response", log);
 		});
 
 		// delete mobile number data
@@ -355,27 +351,21 @@ async function run() {
 		// post CSV File from client site
 		app.post("/csvList", async (req, res) => {
 			const data = req.body;
-			// console.log(data);
-			// const csvData = await csvFileDataCollection.insertOne(data);
-			// console.log(csvData)
-			// res.json(csvData);
+
 			const response = [];
 			for (let index = 0; index < data.length; index++) {
 				const element = data[index];
-				// console.log(element);
 				const csvList = {
 					id: element.id,
 					name: element.name,
 					number: element.number,
 					reference: element.reference,
 				};
-				// console.log(data);
 				const csvListData = await csvFileDataCollection.insertOne(csvList);
 				response.push(csvListData);
 			}
 
 			res.json(response);
-			// console.log(response);
 		});
 
 		// get all CSV file data from database
@@ -398,32 +388,56 @@ async function run() {
 					number: element,
 				};
 
-				// console.log(data);
 
 				const numberData = await mobileNumberDataCollection.insertOne(data);
 				response.push(numberData);
 			}
 
 			res.json(response);
-			// console.log(response);
 		});
 
-		// Get Upload Excel File
-		app.get("/upload-excel-file/", async (req, res) => {
+		/* ***********************************************
+		* ************* START CONTACTS DATA ***************
+		************************************************ */
+
+
+		// Get all contacts data from database
+		app.get("/contacts/", async (req, res) => {
 			const query = {};
-			const cursor = uploadExcelFileCollection.find(query);
+			const cursor = contactsCollection.find(query);
 			const uploadExcelFileData = await cursor.toArray();
 			res.send(uploadExcelFileData);
 		});
 
-		// Get Uploaded single Excel File
-		app.get("/excel-file/:id", async (req, res) => {
+		// Get all mobile number data from a contacts
+		app.get("/contacts/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
-			const cursor = uploadExcelFileCollection.find(query);
+			const cursor = contactsCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
 		});
+
+		// Post contacts data from client site
+		app.post("/contacts", async (req, res) => {
+			const data = req.body;
+			const uploadExcelFileData = await contactsCollection.insertOne(
+				data
+			);
+			res.json(uploadExcelFileData);
+		});
+
+		// Delete contacts data from database
+		app.delete("/contacts:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const result = await contactsCollection.deleteOne(query);
+			res.json(result);
+		});
+
+		/* ***********************************************
+		* ************* END CONTACTS DATA ***************
+		************************************************ */
 
 		// count active, inactive, draft campaigns
 		app.get("/campaigns/count", async (req, res) => {
@@ -447,7 +461,7 @@ async function run() {
 		);
 
 		// Get single campaign details
-		app.get("/campaign-details/:id", async (req, res) => {
+		app.get("/campaigns/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			console.log(query);
@@ -457,7 +471,7 @@ async function run() {
 		});
 
 		// Update single campaign details
-		app.put("/campaign-details/:id", async (req, res) => {
+		app.put("/campaigns/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateStatus = req.body;
 			const filter = { _id: objectId(id) };
@@ -479,60 +493,46 @@ async function run() {
 			}
 		});
 
-		// Post Upload Excel File
-		app.post("/upload-excel-file", async (req, res) => {
-			const data = req.body;
-			const uploadExcelFileData = await uploadExcelFileCollection.insertOne(
-				data
-			);
-			res.json(uploadExcelFileData);
-		});
+
 
 		// get all CSV file data from database
-		app.get("/campaign-list", async (req, res) => {
+		app.get("/campaigns", async (req, res) => {
 			const cursor = campaignCollection.find({});
 			const campaignDataList = await cursor.toArray();
 			res.send(campaignDataList);
 		});
 
 		// get all CSV file data from database
-		app.get("/subscription-list", async (req, res) => {
+		app.get("/subscriptions", async (req, res) => {
 			const cursor = subscriptionListCollection.find({});
 			const campaignDataList = await cursor.toArray();
 			res.send(campaignDataList);
 		});
 
 		// post campaign file
-		app.post("/campaign-list", async (req, res) => {
+		app.post("/campaigns", async (req, res) => {
 			const data = req.body;
 			const campaignListData = await campaignCollection.insertOne(data);
 			res.json(campaignListData);
 		});
 
 		// post campaign file
-		app.post("/subscription-list", async (req, res) => {
+		app.post("/subscriptions", async (req, res) => {
 			const data = req.body;
 			const campaignListData = await subscriptionListCollection.insertOne(data);
 			res.json(campaignListData);
 		});
 
-		// delete uploaded excel file
-		app.delete("/delete-excel-file/:id", async (req, res) => {
-			const id = req.params.id;
-			const query = { _id: ObjectId(id) };
-			const result = await uploadExcelFileCollection.deleteOne(query);
-			res.json(result);
-		});
 
 		// delete uploaded excel file
-		app.delete("/delete-campaign/:id", async (req, res) => {
+		app.delete("/campaigns/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await campaignCollection.deleteOne(query);
 			res.json(result);
 		});
 		// delete uploaded excel file
-		app.delete("/delete-subscription/:id", async (req, res) => {
+		app.delete("/subscriptions/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await subscriptionListCollection.deleteOne(query);
@@ -547,7 +547,7 @@ async function run() {
 		});
 
 		// get number of active and inactive users
-		app.get("/users-count", async (req, res) => {
+		app.get("/users/count", async (req, res) => {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
 			const activeUsers = usersDataList.filter(
