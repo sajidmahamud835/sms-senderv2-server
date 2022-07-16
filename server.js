@@ -7,7 +7,6 @@ const twilio = require("twilio");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
 const { response } = require("express");
-const objectId = require("mongodb").ObjectId;
 require("dotenv").config();
 
 app.use(cors());
@@ -175,7 +174,7 @@ async function run() {
 		app.put('/templates/:id', async (req, res) => {
 			const id = req.params.id;
 			const updatedMessage = req.body;
-			const filter = { _id: objectId(id) };
+			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
@@ -196,7 +195,7 @@ async function run() {
 		app.delete('/templates/:id', async (req, res) => {
 			const id = req.params.id;
 			console.log(id);
-			const query = { _id: objectId(id) };
+			const query = { _id: ObjectId(id) };
 			const result = await MessageTemplates.deleteOne(query);
 			res.json(result);
 		});
@@ -229,7 +228,7 @@ async function run() {
 
 			const id = req.params.id;
 			const updatedNumber = req.body;
-			const filter = { _id: objectId(id) };
+			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
 			console.log(updatedNumber);
 			const updateDoc = {
@@ -253,7 +252,7 @@ async function run() {
 		// delete mobile number data
 		app.delete("/smsApi/numbers/:id", async (req, res) => {
 			const id = req.params.id;
-			const query = { _id: objectId(id) };
+			const query = { _id: ObjectId(id) };
 			const result = await mobileNumberDataCollection.deleteOne(query);
 			res.json(result);
 		});
@@ -277,7 +276,7 @@ async function run() {
 			const id = req.params.id;
 			const updatedSmsApiData = req.body;
 			delete updatedSmsApiData._id;
-			const filter = { _id: objectId(id) };
+			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
@@ -463,7 +462,7 @@ async function run() {
 		app.put("/campaigns/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateStatus = req.body;
-			const filter = { _id: objectId(id) };
+			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
@@ -661,7 +660,7 @@ async function run() {
 		// delete user from database
 		app.delete("/users/:id", async (req, res) => {
 			const id = req.params.id;
-			const query = { _id: objectId(id) };
+			const query = { _id: ObjectId(id) };
 			const result = await usersDataCollections.deleteOne(query);
 			res.json(result);
 		});
@@ -691,7 +690,7 @@ async function run() {
 		app.put("/admins/:id", async (req, res) => {
 			const id = req.params.id;
 			const updatedEmail = req.body;
-			const filter = { _id: objectId(id) };
+			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
@@ -713,7 +712,7 @@ async function run() {
 		// delete admin from database
 		app.delete("/admins/:id", async (req, res) => {
 			const id = req.params.id;
-			const query = { _id: objectId(id) };
+			const query = { _id: ObjectId(id) };
 			const result = await adminDataCollection.deleteOne(query);
 			res.json(result);
 		});
