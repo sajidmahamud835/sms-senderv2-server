@@ -71,6 +71,26 @@ async function run() {
 		const MessageTemplates = database.collection("templates");
 		const userCollection = database.collection("users");
 
+
+		// setting JWT
+		app.put('/user/:email', async (req, res) => {
+			const email = req.params.email;
+			const user = req.body;
+			const filter = { email: email };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: user,
+			};
+			const result = await userCollection.updateOne(filter, updateDoc, options);
+			const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET);
+			res.send({ result, token });
+		});
+
+
+		/* **********************************************************
+		* ********************** Start SMS API *****************
+		*********************************************************** */
+
 		//Send SMS
 		app.post("/sms/send", async (req, res) => {
 			try {
@@ -111,79 +131,6 @@ async function run() {
 			}
 		});
 
-		// setting JWT
-		app.put('/user/:email', async (req, res) => {
-			const email = req.params.email;
-			const user = req.body;
-			const filter = { email: email };
-			const options = { upsert: true };
-			const updateDoc = {
-				$set: user,
-			};
-			const result = await userCollection.updateOne(filter, updateDoc, options);
-			const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET);
-			res.send({ result, token });
-		});
-
-		//campaign corn jobs
-
-		app.get("/corns/campaign", async (req, res) => {
-			try {
-				const campaigns = await campaignCollection.find({}).toArray();
-				const smsApiData = await smsApiDataCollection.find({}).toArray();
-				const client = new twilio(
-					smsApiData[0].accountSID,
-					smsApiData[0].authToken
-				);
-				const message_id = [];
-				for (campaignData of campaigns) {
-					const {
-						number: sender,
-						messageBody: message,
-						contactList,
-						startDate,
-					} = campaignData;
-					startDate = new Date(startDate); //convert startDate to date
-					const currentDate = new Date(); //get current date
-					if (currentDate >= startDate) { //if current date is greater than start date
-						const receiver = await contactsCollection
-							.find({ _id: ObjectId(contactList) })
-							.toArray();
-						for (const r of receiver) {
-							for (const number of r?.array) {
-								console.log("number", number.mobile);
-								await client.messages
-									.create({
-										body: message,
-										to: "+" + number.mobile,
-										from: sender,
-									})
-									.then((message) => {
-										console.log(message);
-										if (message.sid) {
-											message_id.push(message.sid);
-										}
-									});
-							}
-						}
-					} else {
-						console.log("not toady", startDate, date);
-					}
-				}
-				res.json({
-					status: 200,
-					message: "Message Sent Successfully",
-					messageIds: message_id,
-				});
-			} catch (error) {
-				console.log(error);
-				res.json({
-					status: 400,
-					message: "Message Sent Failed!" + " " + error.message,
-					code: error.code,
-				});
-			}
-		});
 
 		// Get all SMS logs from twailio	
 		app.get("/sms/logs", async (req, res) => {
@@ -348,33 +295,6 @@ async function run() {
 			}
 		});
 
-		// post CSV File from client site
-		app.post("/csvList", async (req, res) => {
-			const data = req.body;
-
-			const response = [];
-			for (let index = 0; index < data.length; index++) {
-				const element = data[index];
-				const csvList = {
-					id: element.id,
-					name: element.name,
-					number: element.number,
-					reference: element.reference,
-				};
-				const csvListData = await csvFileDataCollection.insertOne(csvList);
-				response.push(csvListData);
-			}
-
-			res.json(response);
-		});
-
-		// get all CSV file data from database
-		app.get("/csvList", async (req, res) => {
-			const cursor = csvFileDataCollection.find({});
-			const csvDataList = await cursor.toArray();
-			res.send(csvDataList);
-		});
-
 		// post mobile number data api from client site
 		app.post("/smsApi/numbers", async (req, res) => {
 			const data = req.body;
@@ -395,6 +315,10 @@ async function run() {
 
 			res.json(response);
 		});
+
+		/* **********************************************************
+		* ********************** End SMS API *****************
+		*********************************************************** */
 
 		/* ***********************************************
 		* ************* START CONTACTS DATA ***************
@@ -438,6 +362,70 @@ async function run() {
 		/* ***********************************************
 		* ************* END CONTACTS DATA ***************
 		************************************************ */
+
+		/* ***********************************************************
+		* ****************** Start Campaigns Route *******************
+		* *********************************************************** */
+
+		//campaign corn jobs
+
+		app.get("/corns/campaign", async (req, res) => {
+			try {
+				const campaigns = await campaignCollection.find({}).toArray();
+				const smsApiData = await smsApiDataCollection.find({}).toArray();
+				const client = new twilio(
+					smsApiData[0].accountSID,
+					smsApiData[0].authToken
+				);
+				const message_id = [];
+				for (campaignData of campaigns) {
+					const {
+						number: sender,
+						messageBody: message,
+						contactList,
+						startDate,
+					} = campaignData;
+					startDate = new Date(startDate); //convert startDate to date
+					const currentDate = new Date(); //get current date
+					if (currentDate >= startDate) { //if current date is greater than start date
+						const receiver = await contactsCollection
+							.find({ _id: ObjectId(contactList) })
+							.toArray();
+						for (const r of receiver) {
+							for (const number of r?.array) {
+								console.log("number", number.mobile);
+								await client.messages
+									.create({
+										body: message,
+										to: "+" + number.mobile,
+										from: sender,
+									})
+									.then((message) => {
+										console.log(message);
+										if (message.sid) {
+											message_id.push(message.sid);
+										}
+									});
+							}
+						}
+					} else {
+						console.log("not toady", startDate, date);
+					}
+				}
+				res.json({
+					status: 200,
+					message: "Message Sent Successfully",
+					messageIds: message_id,
+				});
+			} catch (error) {
+				console.log(error);
+				res.json({
+					status: 400,
+					message: "Message Sent Failed!" + " " + error.message,
+					code: error.code,
+				});
+			}
+		});
 
 		// count active, inactive, draft campaigns
 		app.get("/campaigns/count", async (req, res) => {
@@ -516,14 +504,6 @@ async function run() {
 			res.json(campaignListData);
 		});
 
-		// post campaign file
-		app.post("/subscriptions", async (req, res) => {
-			const data = req.body;
-			const campaignListData = await subscriptionListCollection.insertOne(data);
-			res.json(campaignListData);
-		});
-
-
 		// delete uploaded excel file
 		app.delete("/campaigns/:id", async (req, res) => {
 			const id = req.params.id;
@@ -531,13 +511,33 @@ async function run() {
 			const result = await campaignCollection.deleteOne(query);
 			res.json(result);
 		});
-		// delete uploaded excel file
+		/* ***********************************************************
+		* ****************** End Campaigns Route *******************
+		* *********************************************************** */
+
+		/* ***********************************************************
+		* ****************** Start Subscription Route *******************
+		* *********************************************************** */
+		// suscription list
+		app.post("/subscriptions", async (req, res) => {
+			const data = req.body;
+			const campaignListData = await subscriptionListCollection.insertOne(data);
+			res.json(campaignListData);
+		});
+
 		app.delete("/subscriptions/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await subscriptionListCollection.deleteOne(query);
 			res.json(result);
 		});
+		/* ***********************************************************
+		* ****************** End Subscription Route *******************
+		* *********************************************************** */
+
+		/* ***********************************************************
+		* ****************** Start Users Route *******************
+		* *********************************************************** */
 
 		// get users from database
 		app.get("/users", async (req, res) => {
@@ -665,6 +665,13 @@ async function run() {
 			res.json(result);
 		});
 
+		/* ***********************************************************
+		* ****************** End Users Route *******************
+		* *********************************************************** */
+
+		/* ***********************************************************
+		* ****************** Start Admin Route *******************
+		* *********************************************************** */
 		// add admin to database
 		app.post("/admins", async (req, res) => {
 			const data = req.body;
@@ -708,6 +715,37 @@ async function run() {
 			const query = { _id: objectId(id) };
 			const result = await adminDataCollection.deleteOne(query);
 			res.json(result);
+		});
+		/* ***********************************************************
+		* ****************** End Admin Route *******************
+		* *********************************************************** */
+
+
+		// post CSV File from client site
+		app.post("/csvList", async (req, res) => {
+			const data = req.body;
+
+			const response = [];
+			for (let index = 0; index < data.length; index++) {
+				const element = data[index];
+				const csvList = {
+					id: element.id,
+					name: element.name,
+					number: element.number,
+					reference: element.reference,
+				};
+				const csvListData = await csvFileDataCollection.insertOne(csvList);
+				response.push(csvListData);
+			}
+
+			res.json(response);
+		});
+
+		// get all CSV file data from database
+		app.get("/csvList", async (req, res) => {
+			const cursor = csvFileDataCollection.find({});
+			const csvDataList = await cursor.toArray();
+			res.send(csvDataList);
 		});
 
 		console.log("Database connected");
