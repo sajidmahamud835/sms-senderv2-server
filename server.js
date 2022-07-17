@@ -546,6 +546,14 @@ async function run() {
 			res.send(usersDataList);
 		});
 
+		// get inactive users from database (isActiveUser === "no")
+		app.get("/users/inactive", async (req, res) => {
+			const cursor = usersDataCollections.find({ isActiveUser: "no" });
+			const usersDataList = await cursor.toArray();
+			res.send(usersDataList);
+		}
+		);
+
 		// get number of active and inactive users
 		app.get("/users/count", async (req, res) => {
 			const cursor = usersDataCollections.find({});
