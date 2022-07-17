@@ -27,7 +27,7 @@ async function run() {
 
         //connect to mongo db
         await client.connect();
-        console.log('Connected to MongoDB');
+        // console.log('Connected to MongoDB');
 
         /************************************************************
                         Mongo DB Database Stucture Start
@@ -76,8 +76,8 @@ async function run() {
 
         //run initTwilioApi function to initialize twilio api
         const twilioApi = await initTwilioApi();
-        console.log('Twilio api initialized');
-        console.log(twilioApi);
+        // console.log('Twilio api initialized');
+        // console.log(twilioApi);
 
         // twilio api credentials
         const accountSID = twilioApi.accountSID;
@@ -86,7 +86,7 @@ async function run() {
 
         // create twilio client
         const twilioClient = new twilio(accountSID, authToken);
-        console.log('Twilio client initialized');
+        // console.log('Twilio client initialized');
 
         /* ************************************************************
             Initializing Database Collections and Inserting Data Start 
@@ -95,8 +95,8 @@ async function run() {
         /////////////// user ////////////////
         const user = await userCollection.findOne({}); // get user
         if (user) {
-            console.log('User initialized');
-            console.log(user);
+            // console.log('User initialized');
+            // console.log(user);
         }
         else {
             const user = {
@@ -148,15 +148,15 @@ async function run() {
                 ],
             };
             await userCollection.insertOne(user); // insert user to mongo db
-            console.log('User initialized');
-            console.log(user);
+            // console.log('User initialized');
+            // console.log(user);
         }
 
         /////////////// subscription ////////////////
         const subscription = await subscriptionCollection.findOne({}); // get subscription
         if (subscription) {
-            console.log('Subscription initialized');
-            console.log(subscription);
+            // console.log('Subscription initialized');
+            // console.log(subscription);
         }
         else {
             const subscription = {
@@ -167,15 +167,15 @@ async function run() {
                 subscriptionUpdated: new Date(),
             };
             await subscriptionCollection.insertOne(subscription); // insert subscription to mongo db
-            console.log('Subscription initialized');
-            console.log(subscription);
+            // console.log('Subscription initialized');
+            // console.log(subscription);
         }
 
         /////////////// campaign ////////////////
         const campaign = await campaignCollection.findOne({}); // get campaign
         if (campaign) {
-            console.log('Campaign initialized');
-            console.log(campaign);
+            // console.log('Campaign initialized');
+            // console.log(campaign);
         }
         else {
             const campaign = {
@@ -186,15 +186,15 @@ async function run() {
                 campaignUpdated: new Date(),
             };
             await campaignCollection.insertOne(campaign); // insert campaign to mongo db
-            console.log('Campaign initialized');
-            console.log(campaign);
+            // console.log('Campaign initialized');
+            // console.log(campaign);
         }
 
         /////////////// message template ////////////////
         const messageTemplate = await messageTemplateCollection.findOne({}); // get message template
         if (messageTemplate) {
-            console.log('Message template initialized');
-            console.log(messageTemplate);
+            // console.log('Message template initialized');
+            // console.log(messageTemplate);
         }
         else {
             const messageTemplate = {
@@ -206,15 +206,15 @@ async function run() {
                 messageTemplateContent: 'messageTemplateContent',
             };
             await messageTemplateCollection.insertOne(messageTemplate); // insert message template to mongo db
-            console.log('Message template initialized');
-            console.log(messageTemplate);
+            // console.log('Message template initialized');
+            // console.log(messageTemplate);
         }
 
         /////////////// sms log ////////////////
         const smsLog = await smsLogCollection.findOne({}); // get sms log
         if (smsLog) {
-            console.log('Sms log initialized');
-            console.log(smsLog);
+            // console.log('Sms log initialized');
+            // console.log(smsLog);
         }
         else {
             const smsLog = {
@@ -228,8 +228,8 @@ async function run() {
                 userName: userCollection.findOne({}).userName,
             };
             await smsLogCollection.insertOne(smsLog); // insert sms log to mongo db
-            console.log('Sms log initialized');
-            console.log(smsLog);
+            // console.log('Sms log initialized');
+            // console.log(smsLog);
         }
 
 
@@ -689,7 +689,7 @@ async function run() {
                 from: sms.twilioNumber,
                 to: sms.phoneNumber
             });
-            console.log(twilioMessage);
+            // console.log(twilioMessage);
             // create sms log using smsCurd
             const smsLog = await createSms({
                 smsId: twilioMessage.sid,
@@ -702,7 +702,7 @@ async function run() {
                 smsLogCreated: new Date(),
                 smsLogUpdated: new Date(),
             });
-            console.log(smsLog);
+            // console.log(smsLog);
             return twilioMessage;
         };
 
@@ -844,6 +844,6 @@ app.get('/', (req, res) => {
 );
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    // console.log(`Server running on port ${port}`);
 }
 );
