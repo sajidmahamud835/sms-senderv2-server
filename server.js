@@ -490,12 +490,6 @@ async function run() {
 			res.send(campaignDataList);
 		});
 
-		// get all CSV file data from database
-		app.get("/subscriptions", async (req, res) => {
-			const cursor = subscriptionListCollection.find({});
-			const campaignDataList = await cursor.toArray();
-			res.send(campaignDataList);
-		});
 
 		// post campaign file
 		app.post("/campaigns", async (req, res) => {
@@ -518,12 +512,55 @@ async function run() {
 		/* ***********************************************************
 		* ****************** Start Subscription Route *******************
 		* *********************************************************** */
+		// get all CSV file data from database
+		app.get("/subscriptions", async (req, res) => {
+			const cursor = subscriptionListCollection.find({});
+			const subscriptions = await cursor.toArray();
+			res.send(subscriptions);
+		});
+
+
 		// suscription list
 		app.post("/subscriptions", async (req, res) => {
 			const data = req.body;
-			const campaignListData = await subscriptionListCollection.insertOne(data);
-			res.json(campaignListData);
+			const subscriptions = await subscriptionListCollection.insertOne(data);
+			res.json(subscriptions);
 		});
+
+		//get single suscription details
+		app.get("/subscriptions/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			console.log(query);
+			const cursor = subscriptionListCollection.find(query);
+			const result = await cursor.toArray();
+			res.send(result[0]);
+		}
+		);
+
+		//update subscriptions from client
+		app.put("/subscriptions/:id", async (req, res) => {
+			const id = req.params.id;
+			const subscriptions = req.body;
+			const filter = { _id: ObjectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					...subscriptions,
+				},
+			};
+			const result = await subscriptionListCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			if (result) {
+				const cursor = subscriptionListCollection.find({});
+				const subscriptionData = await cursor.toArray();
+				res.json({ ...result, data: subscriptionData });
+			}
+		}
+		);
 
 		app.delete("/subscriptions/:id", async (req, res) => {
 			const id = req.params.id;
@@ -568,6 +605,22 @@ async function run() {
 			inactiveUsersCount = inactiveUsers.length;
 			res.send({ activeUsersCount, inactiveUsersCount });
 		});
+
+		//get admin users from database
+		app.get("/users/admin", async (req, res) => {
+			const cursor = usersDataCollections.find({ isAdmin: "yes" });
+			const usersDataList = await cursor.toArray();
+			res.send(usersDataList);
+		}
+		);
+
+		//get non admin users from database
+		app.get("/users/non-admin", async (req, res) => {
+			const cursor = usersDataCollections.find({ isAdmin: "no" });
+			const usersDataList = await cursor.toArray();
+			res.send(usersDataList);
+		}
+		);
 
 		// get single user from database by id
 		app.get("/users/:id", async (req, res) => {
@@ -618,34 +671,20 @@ async function run() {
 			const user = req.body;
 			const d = new Date();
 			user["accountCreated"] = d.toDateString();
-			// add current date to user object	
-			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
-			user["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
-			console.log(user);
+			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200";
+			user["id"] = uuidv4().slice(0, 6);
+			user["isActiveUser"] = "no";
+			user["role"] = "user";
+			//get username from email
+			user["userName"] = user.email.split("@")[0];
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
 		});
 
-		// update user to database
-		// app.put("/users", async (req, res) => {
-		// 	const user = req.body;
-		// 	const filter = { email: user.email };
-		// 	const options = { upsert: true };
-		// 	const updateDoc = { $set: user };
-		// 	console.log(updateDoc);
-		// 	const updatedUserData = await usersDataCollections.updateOne(
-		// 		filter,
-		// 		updateDoc,
-		// 		options
-		// 	);
-		// 	res.json(updatedUserData);
-		// });
-
-		// put user data to database
+		// update user in database
 		app.put("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateUserData = req.body;
-			// delete updateUserData._id;
 			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
 			const updateDoc = {
@@ -673,6 +712,7 @@ async function run() {
 			res.json(result);
 		});
 
+
 		/* ***********************************************************
 		* ****************** End Users Route *******************
 		* *********************************************************** */
@@ -680,50 +720,78 @@ async function run() {
 		/* ***********************************************************
 		* ****************** Start Admin Route *******************
 		* *********************************************************** */
-		// add admin to database
+
+		// get email from req.body and update user to admin
 		app.post("/admins", async (req, res) => {
 			const data = req.body;
-			const result = await adminDataCollection.insertOne(data);
-			res.json(result);
-		});
+			const email = data.email;
+			const query = { email: email };
+			//verify if the user exists
+			const cursor = usersDataCollections.find(query);
+			const usersDataList = await cursor.toArray();
+			if (usersDataList.length === 0) {
+				res.send({ status: 400, message: "User not found" });
+			}
+			//check if user is already admin
+			else if (usersDataList[0].role === "admin") {
+				res.send({ status: 400, message: "User is already admin" });
+			}
+			//update user to admin
+			else {
+				const updateDoc = { $set: { role: "admin", position: "Admin" } };
+				const result = await usersDataCollections.updateOne(
+					query,
+					updateDoc
+				);
+				res.json(result);
 
-		// get all admin data data from database
+			}
+		}
+		);
+
+
+		// get all users with role admin from database
 		app.get("/admins", async (req, res) => {
-			const cursor = adminDataCollection.find({});
+			const cursor = usersDataCollections.find({ role: "admin" });
 			const result = await cursor.toArray();
 			res.send(result);
-		});
+		}
+		);
 
-		// update admin to database
-		app.put("/admins/:id", async (req, res) => {
-			const id = req.params.id;
-			const updatedEmail = req.body;
-			const filter = { _id: ObjectId(id) };
+		// update users position by email
+		app.put("/admins/:email", async (req, res) => {
+			const email = req.params.email;
+			const updatedData = req.body;
+			const filter = { email: email };
 			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
-					email: updatedEmail.email,
+					position: updatedData.position,
 				},
 			};
-			const result = await adminDataCollection.updateOne(
+			const result = await usersDataCollections.updateOne(
 				filter,
 				updateDoc,
 				options
 			);
-			if (result) {
-				const cursor = adminDataCollection.find({});
-				const adminData = await cursor.toArray();
-				res.json({ ...result, data: adminData });
-			}
-		});
-
-		// delete admin from database
-		app.delete("/admins/:id", async (req, res) => {
-			const id = req.params.id;
-			const query = { _id: ObjectId(id) };
-			const result = await adminDataCollection.deleteOne(query);
 			res.json(result);
 		});
+
+		// remove admin role from user using email
+		app.delete("/admins/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
+			const updateDoc = { $set: { role: "user", position: "User" } };
+			const options = { upsert: true };
+			const result = await usersDataCollections.updateOne(
+				query,
+				updateDoc,
+				options
+			);
+			res.json(result);
+		}
+		);
+
 		/* ***********************************************************
 		* ****************** End Admin Route *******************
 		* *********************************************************** */
