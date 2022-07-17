@@ -721,6 +721,23 @@ async function run() {
 		* ****************** Start Admin Route *******************
 		* *********************************************************** */
 
+		//check if user is admin
+		app.get("/admin/check/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email, role: "admin" };
+			const cursor = usersDataCollections.find(query);
+			const result = await cursor.toArray();
+
+			if (result.length > 0 && result[0].role === "admin") {
+				res.send({ isAdmin: true, status: 200 });
+			}
+			else {
+				res.send({ isAdmin: false, status: 400 });
+			}
+
+		}
+		);
+
 		// get email from req.body and update user to admin
 		app.post("/admins", async (req, res) => {
 			const data = req.body;
