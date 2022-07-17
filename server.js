@@ -29,19 +29,19 @@ const date =
 const time =
 	today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
 const dateTime = date + " " + time;
-console.log(dateTime);
+// console.log(dateTime);
 
 //date and time to number
 const dateToNumber = new Date(dateTime);
 const dateNumber = dateToNumber.getTime();
-console.log(dateNumber);
+// console.log(dateNumber);
 
 
 
 // JWT token verification function
 function verifyJWT(req, res, next) {
 	const authHeader = req.headers.authorization;
-	console.log(authHeader);
+	// console.log(authHeader);
 	if (!authHeader) {
 		return res.status(401).send({ message: 'UnAuthorized access' });
 	}
@@ -73,7 +73,7 @@ async function run() {
 
 
 		// setting JWT
-		app.put('/user/:email', async (req, res) => {
+		app.put('/user/jwt/:email', async (req, res) => {
 			const email = req.params.email;
 			const user = req.body;
 			const filter = { email: email };
@@ -110,7 +110,7 @@ async function run() {
 							from: sender,
 						})
 						.then((message) => {
-							console.log(message);
+							// console.log(message);
 							if (message.sid) {
 								message_id.push(message.sid);
 							}
@@ -122,7 +122,7 @@ async function run() {
 					messageIds: message_id,
 				});
 			} catch (error) {
-				console.log(error);
+				// console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Sent Failed!" + " " + error.message,
@@ -133,7 +133,7 @@ async function run() {
 
 
 		// Get all SMS logs from twailio	
-		app.get("/sms/logs", async (req, res) => {
+		app.get("/sms/logs", verifyJWT, async (req, res) => {
 			try {
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
 				const client = new twilio(
@@ -147,7 +147,7 @@ async function run() {
 					messages: messages,
 				});
 			} catch (error) {
-				console.log(error);
+				// console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Sent Failed!" + " " + error.message,
@@ -194,14 +194,14 @@ async function run() {
 
 		app.delete('/templates/:id', async (req, res) => {
 			const id = req.params.id;
-			console.log(id);
+			// console.log(id);
 			const query = { _id: ObjectId(id) };
 			const result = await MessageTemplates.deleteOne(query);
 			res.json(result);
 		});
 
 		// get all mobile number data
-		app.get("/smsApi/numbers", async (req, res) => {
+		app.get("/smsApi/numbers", verifyJWT, async (req, res) => {
 			const log = {
 				rawHeaders: req.rawHeaders,
 				method: req.method,
@@ -230,7 +230,7 @@ async function run() {
 			const updatedNumber = req.body;
 			const filter = { _id: ObjectId(id) };
 			const options = { upsert: true };
-			console.log(updatedNumber);
+			// console.log(updatedNumber);
 			const updateDoc = {
 				$set: {
 					number: updatedNumber.number,
@@ -265,7 +265,7 @@ async function run() {
 		// });
 
 		// get sms api data data from database
-		app.get("/smsApi", async (req, res) => {
+		app.get("/smsApi", verifyJWT, async (req, res) => {
 			const cursor = smsApiDataCollection.find({});
 			const smsApiData = await cursor.toArray();
 			res.send(smsApiData);
@@ -326,7 +326,7 @@ async function run() {
 
 
 		// Get all contacts data from database
-		app.get("/contacts/", async (req, res) => {
+		app.get("/contacts/", verifyJWT, async (req, res) => {
 			const query = {};
 			const cursor = contactsCollection.find(query);
 			const uploadExcelFileData = await cursor.toArray();
@@ -369,7 +369,7 @@ async function run() {
 
 		//campaign corn jobs
 
-		app.get("/corns/campaign", async (req, res) => {
+		app.get("/corns/campaign", verifyJWT, async (req, res) => {
 			try {
 				const campaigns = await campaignCollection.find({}).toArray();
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
@@ -393,7 +393,7 @@ async function run() {
 							.toArray();
 						for (const r of receiver) {
 							for (const number of r?.array) {
-								console.log("number", number.mobile);
+								// console.log("number", number.mobile);
 								await client.messages
 									.create({
 										body: message,
@@ -401,7 +401,7 @@ async function run() {
 										from: sender,
 									})
 									.then((message) => {
-										console.log(message);
+										// console.log(message);
 										if (message.sid) {
 											message_id.push(message.sid);
 										}
@@ -409,7 +409,7 @@ async function run() {
 							}
 						}
 					} else {
-						console.log("not toady", startDate, date);
+						// console.log("not toady", startDate, date);
 					}
 				}
 				res.json({
@@ -418,7 +418,7 @@ async function run() {
 					messageIds: message_id,
 				});
 			} catch (error) {
-				console.log(error);
+				// console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Sent Failed!" + " " + error.message,
@@ -428,7 +428,7 @@ async function run() {
 		});
 
 		// count active, inactive, draft campaigns
-		app.get("/campaigns/count", async (req, res) => {
+		app.get("/campaigns/count", verifyJWT, async (req, res) => {
 			const cursor = campaignCollection.find({});
 			const campaignData = await cursor.toArray();
 			const activeCampaigns = campaignData.filter(
@@ -449,10 +449,10 @@ async function run() {
 		);
 
 		// Get single campaign details
-		app.get("/campaigns/:id", async (req, res) => {
+		app.get("/campaigns/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
-			console.log(query);
+			// console.log(query);
 			const cursor = campaignCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
@@ -484,8 +484,16 @@ async function run() {
 
 
 		// get all CSV file data from database
-		app.get("/campaigns", async (req, res) => {
+		app.get("/campaigns", verifyJWT, async (req, res) => {
 			const cursor = campaignCollection.find({});
+			const campaignDataList = await cursor.toArray();
+			res.send(campaignDataList);
+		});
+
+
+		// get all CSV file data from database
+		app.get("/subscriptions", verifyJWT, async (req, res) => {
+			const cursor = subscriptionListCollection.find({});
 			const campaignDataList = await cursor.toArray();
 			res.send(campaignDataList);
 		});
@@ -521,7 +529,7 @@ async function run() {
 
 
 		// suscription list
-		app.post("/subscriptions", async (req, res) => {
+		app.post("/subscriptions", verifyJWT, async (req, res) => {
 			const data = req.body;
 			const subscriptions = await subscriptionListCollection.insertOne(data);
 			res.json(subscriptions);
@@ -577,14 +585,14 @@ async function run() {
 		* *********************************************************** */
 
 		// get users from database
-		app.get("/users", async (req, res) => {
+		app.get("/users", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
 		});
 
 		// get inactive users from database (isActiveUser === "no")
-		app.get("/users/inactive", async (req, res) => {
+		app.get("/users/inactive", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({ isActiveUser: "no" });
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
@@ -592,7 +600,7 @@ async function run() {
 		);
 
 		// get number of active and inactive users
-		app.get("/users/count", async (req, res) => {
+		app.get("/users/count", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
 			const activeUsers = usersDataList.filter(
@@ -623,7 +631,7 @@ async function run() {
 		);
 
 		// get single user from database by id
-		app.get("/users/:id", async (req, res) => {
+		app.get("/users/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { id: id };
 			const cursor = usersDataCollections.find(query);
@@ -632,7 +640,7 @@ async function run() {
 		});
 
 		// get single user from database by email
-		app.get("/users/email/:email", async (req, res) => {
+		app.get("/users/email/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			const query = { email: email };
 			const cursor = usersDataCollections.find(query);
@@ -681,7 +689,6 @@ async function run() {
 			res.json(usersData);
 		});
 
-		// update user in database
 		app.put("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateUserData = req.body;
@@ -835,13 +842,13 @@ async function run() {
 		});
 
 		// get all CSV file data from database
-		app.get("/csvList", async (req, res) => {
+		app.get("/csvList", verifyJWT, async (req, res) => {
 			const cursor = csvFileDataCollection.find({});
 			const csvDataList = await cursor.toArray();
 			res.send(csvDataList);
 		});
 
-		console.log("Database connected");
+		// console.log("Database connected");
 	} finally {
 		// await client.close();
 	}
@@ -855,5 +862,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-	console.log("Server running on port: ", port);
+	// console.log("Server running on port: ", port);
 });
