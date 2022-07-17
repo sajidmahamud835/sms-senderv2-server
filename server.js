@@ -652,9 +652,9 @@ async function run() {
 		// post user to database using email
 		app.post("/users/complete", async (req, res) => {
 			const data = req.body;
-			// if (!data.imageUrl) {
-			// 	data["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
-			// }
+			if (!data.imageUrl) {
+				data["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
+			}
 			if (!data.id) {
 				data["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
 			}
