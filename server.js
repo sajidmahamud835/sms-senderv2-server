@@ -595,8 +595,8 @@ async function run() {
 		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			//check if user exists
-			const user = usersDataCollections.findOne({ email });
-
+			const user = await usersDataCollections.findOne({ email });
+			console.log(user);
 			if (!user) {
 				res.json({
 					status: 400,
@@ -606,10 +606,12 @@ async function run() {
 				const cursor = campaignCollection.find({});
 				const campaignDataList = await cursor.toArray();
 				res.send(campaignDataList);
+				console.log("is admin");
 			} else {
 				const cursor = campaignCollection.find({ email });
 				const campaignDataList = await cursor.toArray();
 				res.send(campaignDataList);
+				console.log("is user");
 			}
 
 		});
@@ -772,8 +774,10 @@ async function run() {
 		// post user to database using email
 		app.post("/users/complete", async (req, res) => {
 			const data = req.body;
+			console.log(data);
 			if (!data.imageUrl) {
 				data["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
+				console.log(data.imageUrl);
 			}
 			if (!data.id) {
 				data["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
@@ -931,7 +935,7 @@ async function run() {
 		app.delete("/admins/:email", async (req, res) => {
 			const email = req.params.email;
 			const query = { email: email };
-			const updateDoc = { $set: { role: users, position: users } };
+			const updateDoc = { $set: { role: 'user', position: 'User' } };
 			const options = { upsert: true };
 			const result = await usersDataCollections.updateOne(
 				query,
