@@ -591,11 +591,11 @@ async function run() {
 
 
 
-		// get all CSV file data from database
-		app.get("/campaigns/:email", verifyJWT, async (req, res) => {
+		// Get all campaigns
+		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			//check if user exists
-			const user = usersCollection.findOne({ email });
+			const user = usersDataCollections.findOne({ email });
 
 			if (!user) {
 				res.json({
@@ -615,12 +615,7 @@ async function run() {
 		});
 
 
-		// get all CSV file data from database
-		app.get("/subscriptions", verifyJWT, async (req, res) => {
-			const cursor = subscriptionListCollection.find({});
-			const campaignDataList = await cursor.toArray();
-			res.send(campaignDataList);
-		});
+
 
 
 		// post campaign file
@@ -644,7 +639,8 @@ async function run() {
 		/* ***********************************************************
 		* ****************** Start Subscription Route *******************
 		* *********************************************************** */
-		// get all CSV file data from database
+
+		// get all subscription data from database
 		app.get("/subscriptions", async (req, res) => {
 			const cursor = subscriptionListCollection.find({});
 			const subscriptions = await cursor.toArray();
