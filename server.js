@@ -156,6 +156,79 @@ async function run() {
 			}
 		});
 
+		// Get monthly SMS logs from twailio
+		app.get("/sms/logs/month", async (req, res) => {
+			try {
+				const smsApiData = await smsApiDataCollection.find({}).toArray();
+				const client = new twilio(
+					smsApiData[0].accountSID,
+					smsApiData[0].authToken
+				);
+				const messages = await client.messages.list({
+					dateSent: {
+						$gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+						$lte: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+					},
+				});
+				//get monthly sms logs
+				const monthlySmsLogs = [];
+				for (message of messages) {
+					const messageData = {
+						date: message.dateSent,
+						status: message.status,
+					};
+					monthlySmsLogs.push(messageData);
+				}
+
+				//count sms per day
+				const monthlySmsCount = [];
+				for (let i = 1; i <= new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(); i++) {
+					const count = monthlySmsLogs.filter((message) => {
+						return message.date.getDate() === i;
+					}
+					).length;
+					const element = { name: i };
+					element["SMS Sent"] = count;
+					monthlySmsCount.push(element);
+				}
+
+				//count sms per status
+				const monthlySmsStatus = [];
+				for (let i = 0; i < monthlySmsLogs.length; i++) {
+					const element = { name: monthlySmsLogs[i].status };
+					element["SMS Sent"] = 1;
+					monthlySmsStatus.push(element);
+				}
+
+				const monthlySmsStatusCount = monthlySmsStatus.reduce((acc, curr) => {
+					const found = acc.find((item) => item.name === curr.name);
+					if (found) {
+						found["SMS Sent"] += curr["SMS Sent"];
+					} else {
+						acc.push(curr);
+					}
+					return acc;
+				}
+					, []);
+
+
+				res.json({
+					status: 200,
+					report: monthlySmsCount,
+					statusReport: monthlySmsStatusCount,
+				});
+			} catch (error) {
+				// console.log(error);
+				res.json({
+					status: 400,
+					message: error.message,
+					code: error.code,
+				});
+			}
+		}
+		);
+
+
 		// get message templates
 		app.get('/templates', verifyJWT, async (req, res) => {
 			const templates = await MessageTemplates.find({}).toArray();
@@ -591,7 +664,7 @@ async function run() {
 			res.send(usersDataList);
 		});
 
-		// get inactive users from database (isActiveUser === "no")
+		// get inusers from database (isActiveUser === "no")
 		app.get("/users/inactive", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({ isActiveUser: "no" });
 			const usersDataList = await cursor.toArray();
@@ -599,15 +672,15 @@ async function run() {
 		}
 		);
 
-		// get number of active and inactive users
+		// get number of and inusers
 		app.get("/users/count", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
 			const activeUsers = usersDataList.filter(
-				(user) => user.isActiveUser === "yes" // filter active users
+				(user) => user.isActiveUser === "yes" // filter users
 			);
 			const inactiveUsers = usersDataList.filter(
-				(user) => user.isActiveUser === "no" // filter inactive users
+				(user) => user.isActiveUser === "no" // filter inusers
 			);
 			activeUsersCount = activeUsers.length;
 			inactiveUsersCount = inactiveUsers.length;
@@ -682,7 +755,7 @@ async function run() {
 			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200";
 			user["id"] = uuidv4().slice(0, 6);
 			user["isActiveUser"] = "no";
-			user["role"] = "user";
+			user["role"] = users;
 			//get username from email
 			user["userName"] = user.email.split("@")[0];
 			const usersData = await usersDataCollections.insertOne(user);
@@ -718,6 +791,12 @@ async function run() {
 			const result = await usersDataCollections.deleteOne(query);
 			res.json(result);
 		});
+
+
+
+
+
+
 
 
 		/* ***********************************************************
@@ -805,7 +884,7 @@ async function run() {
 		app.delete("/admins/:email", async (req, res) => {
 			const email = req.params.email;
 			const query = { email: email };
-			const updateDoc = { $set: { role: "user", position: "User" } };
+			const updateDoc = { $set: { role: users, position: users } };
 			const options = { upsert: true };
 			const result = await usersDataCollections.updateOne(
 				query,
