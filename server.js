@@ -230,10 +230,44 @@ async function run() {
 
 
 		// get message templates
-		app.get('/templates', verifyJWT, async (req, res) => {
-			const templates = await MessageTemplates.find({}).toArray();
-			res.send(templates);
-		});
+		app.get('/templates/:email', verifyJWT, async (req, res) => {
+			const email = req.params.email;
+			try {
+				const user = await userCollection.findOne({ email: email });
+				// check if user exsit
+				if (!user) {
+					res.json({
+						status: 400,
+						message: "User not found",
+					});
+				}
+				// check if user is admin
+				else if (user.role === "admin") {
+					const templates = await MessageTemplates.find({}).toArray();
+					res.json({
+						status: 200,
+						message: "Message Templates Fetched Successfully",
+						templates: templates,
+					});
+				} else {
+					const templates = await MessageTemplates.find({ email }).toArray();
+					res.json({
+						status: 200,
+						message: "Message Templates Fetched Successfully",
+						templates: templates,
+					});
+				}
+			}
+			catch (error) {
+				// console.log(error);
+				res.json({
+					status: 400,
+					message: "Message Templates Fetched Failed!" + " " + error.message,
+					code: error.code,
+				});
+			}
+		}
+		);
 
 		//post  message templates
 		app.post('/templates', async (req, res) => {
@@ -399,8 +433,9 @@ async function run() {
 
 
 		// Get all contacts data from database
-		app.get("/contacts/", verifyJWT, async (req, res) => {
-			const query = {};
+		app.get("/contacts/:email", verifyJWT, async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
 			const cursor = contactsCollection.find(query);
 			const uploadExcelFileData = await cursor.toArray();
 			res.send(uploadExcelFileData);
@@ -556,20 +591,31 @@ async function run() {
 
 
 
-		// get all CSV file data from database
-		app.get("/campaigns", verifyJWT, async (req, res) => {
-			const cursor = campaignCollection.find({});
-			const campaignDataList = await cursor.toArray();
-			res.send(campaignDataList);
+		// Get all campaigns
+		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
+			const email = req.params.email;
+			//check if user exists
+			const user = usersDataCollections.findOne({ email });
+
+			if (!user) {
+				res.json({
+					status: 400,
+					message: "User not found",
+				});
+			} else if (user.role === "admin") {
+				const cursor = campaignCollection.find({});
+				const campaignDataList = await cursor.toArray();
+				res.send(campaignDataList);
+			} else {
+				const cursor = campaignCollection.find({ email });
+				const campaignDataList = await cursor.toArray();
+				res.send(campaignDataList);
+			}
+
 		});
 
 
-		// get all CSV file data from database
-		app.get("/subscriptions", verifyJWT, async (req, res) => {
-			const cursor = subscriptionListCollection.find({});
-			const campaignDataList = await cursor.toArray();
-			res.send(campaignDataList);
-		});
+
 
 
 		// post campaign file
@@ -593,7 +639,8 @@ async function run() {
 		/* ***********************************************************
 		* ****************** Start Subscription Route *******************
 		* *********************************************************** */
-		// get all CSV file data from database
+
+		// get all subscription data from database
 		app.get("/subscriptions", async (req, res) => {
 			const cursor = subscriptionListCollection.find({});
 			const subscriptions = await cursor.toArray();
