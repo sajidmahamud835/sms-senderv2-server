@@ -77,11 +77,10 @@ async function run() {
 			const email = req.params.email;
 			const user = req.body;
 			const filter = { email: email };
-			const options = { upsert: true };
 			const updateDoc = {
 				$set: user,
 			};
-			const result = await userCollection.updateOne(filter, updateDoc, options);
+			const result = await userCollection.updateOne(filter, updateDoc);
 			const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET);
 			res.send({ result, token });
 		});
@@ -325,18 +324,9 @@ async function run() {
 
 		// update mobile number data
 		app.put("/smsApi/numbers/:id", async (req, res) => {
-			const log = {
-				rawHeaders: req.rawHeaders,
-				method: req.method,
-				url: req.url,
-				statusCode: req.statusCode,
-				statusMessage: req.statusMessage,
-			};
-
 			const id = req.params.id;
 			const updatedNumber = req.body;
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
 			// console.log(updatedNumber);
 			const updateDoc = {
 				$set: {
@@ -345,8 +335,7 @@ async function run() {
 			};
 			const result = await mobileNumberDataCollection.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = mobileNumberDataCollection.find({});
@@ -384,7 +373,6 @@ async function run() {
 			const updatedSmsApiData = req.body;
 			delete updatedSmsApiData._id;
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					...updatedSmsApiData,
@@ -392,8 +380,7 @@ async function run() {
 			};
 			const result = await smsApiDataCollection.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = smsApiDataCollection.find({});
@@ -571,7 +558,6 @@ async function run() {
 			const id = req.params.id;
 			const updateStatus = req.body;
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					status: updateStatus.status,
@@ -579,8 +565,7 @@ async function run() {
 			};
 			const result = await campaignCollection.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = campaignCollection.find({});
@@ -612,9 +597,6 @@ async function run() {
 			}
 
 		});
-
-
-
 
 
 		// post campaign file
@@ -670,7 +652,6 @@ async function run() {
 			const id = req.params.id;
 			const subscriptions = req.body;
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					...subscriptions,
@@ -678,8 +659,7 @@ async function run() {
 			};
 			const result = await subscriptionListCollection.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = subscriptionListCollection.find({});
@@ -781,7 +761,6 @@ async function run() {
 			}
 			const email = data.email;
 			const query = { email: email }; // query to find user by email
-			const options = { upsert: true }; // if user not found then create new user
 			const updateDoc = {
 				$set: {
 					...data,
@@ -789,8 +768,7 @@ async function run() {
 			};
 			const result = await usersDataCollections.updateOne(
 				query,
-				updateDoc,
-				options
+				updateDoc
 			);
 			res.json(result);
 		});
@@ -814,7 +792,6 @@ async function run() {
 			const id = req.params.id;
 			const updateUserData = req.body;
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					...updateUserData,
@@ -822,8 +799,7 @@ async function run() {
 			};
 			const result = await usersDataCollections.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = usersDataCollections.find({});
@@ -914,7 +890,6 @@ async function run() {
 			const email = req.params.email;
 			const updatedData = req.body;
 			const filter = { email: email };
-			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					position: updatedData.position,
@@ -922,8 +897,7 @@ async function run() {
 			};
 			const result = await usersDataCollections.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			res.json(result);
 		});
@@ -933,11 +907,9 @@ async function run() {
 			const email = req.params.email;
 			const query = { email: email };
 			const updateDoc = { $set: { role: 'user', position: 'User' } };
-			const options = { upsert: true };
 			const result = await usersDataCollections.updateOne(
 				query,
-				updateDoc,
-				options
+				updateDoc
 			);
 			res.json(result);
 		}
