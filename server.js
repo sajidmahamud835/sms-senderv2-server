@@ -230,10 +230,44 @@ async function run() {
 
 
 		// get message templates
-		app.get('/templates', verifyJWT, async (req, res) => {
-			const templates = await MessageTemplates.find({}).toArray();
-			res.send(templates);
-		});
+		app.get('/templates/:email', verifyJWT, async (req, res) => {
+			const email = req.params.email;
+			try {
+				const user = await userCollection.findOne({ email: email });
+				// check if user exsit
+				if (!user) {
+					res.json({
+						status: 400,
+						message: "User not found",
+					});
+				}
+				// check if user is admin
+				else if (user.role === "admin") {
+					const templates = await MessageTemplates.find({}).toArray();
+					res.json({
+						status: 200,
+						message: "Message Templates Fetched Successfully",
+						templates: templates,
+					});
+				} else {
+					const templates = await MessageTemplates.find({ email }).toArray();
+					res.json({
+						status: 200,
+						message: "Message Templates Fetched Successfully",
+						templates: templates,
+					});
+				}
+			}
+			catch (error) {
+				// console.log(error);
+				res.json({
+					status: 400,
+					message: "Message Templates Fetched Failed!" + " " + error.message,
+					code: error.code,
+				});
+			}
+		}
+		);
 
 		//post  message templates
 		app.post('/templates', async (req, res) => {
