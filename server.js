@@ -592,10 +592,26 @@ async function run() {
 
 
 		// get all CSV file data from database
-		app.get("/campaigns", verifyJWT, async (req, res) => {
-			const cursor = campaignCollection.find({});
-			const campaignDataList = await cursor.toArray();
-			res.send(campaignDataList);
+		app.get("/campaigns/:email", verifyJWT, async (req, res) => {
+			const email = req.params.email;
+			//check if user exists
+			const user = usersCollection.findOne({ email });
+
+			if (!user) {
+				res.json({
+					status: 400,
+					message: "User not found",
+				});
+			} else if (user.role === "admin") {
+				const cursor = campaignCollection.find({});
+				const campaignDataList = await cursor.toArray();
+				res.send(campaignDataList);
+			} else {
+				const cursor = campaignCollection.find({ email });
+				const campaignDataList = await cursor.toArray();
+				res.send(campaignDataList);
+			}
+
 		});
 
 
