@@ -596,7 +596,6 @@ async function run() {
 			const email = req.params.email;
 			//check if user exists
 			const user = await usersDataCollections.findOne({ email });
-			console.log(user);
 			if (!user) {
 				res.json({
 					status: 400,
@@ -606,12 +605,10 @@ async function run() {
 				const cursor = campaignCollection.find({});
 				const campaignDataList = await cursor.toArray();
 				res.send(campaignDataList);
-				console.log("is admin");
 			} else {
 				const cursor = campaignCollection.find({ email });
 				const campaignDataList = await cursor.toArray();
 				res.send(campaignDataList);
-				console.log("is user");
 			}
 
 		});
