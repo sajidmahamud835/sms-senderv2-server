@@ -707,7 +707,7 @@ async function run() {
 		* *********************************************************** */
 
 		// get users from database
-		app.get("/users", verifyJWT, async (req, res) => {
+		app.get("/users", async (req, res) => {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
@@ -762,7 +762,7 @@ async function run() {
 		});
 
 		// get single user from database by email
-		app.get("/users/email/:email", verifyJWT, async (req, res) => {
+		app.get("/users/email/:email", async (req, res) => {
 			const email = req.params.email;
 			const query = { email: email };
 			const cursor = usersDataCollections.find(query);
@@ -816,8 +816,9 @@ async function run() {
 		app.put("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateUserData = req.body;
+			console.log(updateUserData);
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
+			// const options = { upsert: true }; //stop creating new data if not found
 			const updateDoc = {
 				$set: {
 					...updateUserData,
@@ -825,8 +826,7 @@ async function run() {
 			};
 			const result = await usersDataCollections.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = usersDataCollections.find({});
@@ -842,13 +842,6 @@ async function run() {
 			const result = await usersDataCollections.deleteOne(query);
 			res.json(result);
 		});
-
-
-
-
-
-
-
 
 		/* ***********************************************************
 		* ****************** End Users Route *******************
