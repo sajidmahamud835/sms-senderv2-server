@@ -577,7 +577,7 @@ async function run() {
 
 
 		// Get all campaigns
-		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
+		app.get("/campaigns/user/:email", async (req, res) => {
 			const email = req.params.email;
 			//check if user exists
 			const user = await usersDataCollections.findOne({ email });
@@ -698,7 +698,7 @@ async function run() {
 		}
 		);
 
-		// get number of and inusers
+		// get number of and active users from database
 		app.get("/users/count", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({});
 			const usersDataList = await cursor.toArray();
@@ -712,6 +712,7 @@ async function run() {
 			inactiveUsersCount = inactiveUsers.length;
 			res.send({ activeUsersCount, inactiveUsersCount });
 		});
+
 
 		//get admin users from database
 		app.get("/users/admin", async (req, res) => {
@@ -913,6 +914,57 @@ async function run() {
 		/* ***********************************************************
 		* ****************** End Admin Route *******************
 		* *********************************************************** */
+
+		/* ***********************************************************
+		* ****************** Start User Statics *******************
+		* *********************************************************** */
+		// //count campaigns by status and by user
+		// app.get("/campaigns/count/:status/:user", async (req, res) => {
+		// 	const status = req.params.status;
+		// 	const user = req.params.email;
+		// 	const query = { status: status, user: user };
+		// 	const cursor = campaignCollection.find(query);
+		// 	const result = await cursor.toArray();
+		// 	res.send({ count: result.length });
+		// }
+		// );
+
+		// get email and count campaigns by status
+		app.get("/campaigns/count/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
+			const cursor = campaignCollection.find(query);
+			const result = await cursor.toArray();
+			//filter result by status and count them separately
+			const count = {
+				scheduled: 0,
+				active: 0,
+				draft: 0,
+			};
+			console.log(result);
+			result.forEach(campaign => {
+
+				if (campaign.status === "Scheduled") {
+					count.scheduled++;
+				}
+				else if (campaign.status === "Active") {
+					count.active++;
+				}
+				else if (campaign.status === "Draft") {
+					count.draft++;
+				}
+			}
+			);
+			res.send(count);
+		}
+		);
+
+
+
+		/* ***********************************************************
+			* ****************** End User Statics *******************
+		* *********************************************************** */
+
 
 
 		// post CSV File from client site
