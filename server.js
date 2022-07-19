@@ -420,7 +420,7 @@ async function run() {
 
 
 		// Get all contacts data from database
-		app.get("/contacts/:email", verifyJWT, async (req, res) => {
+		app.get("/contacts/email/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			const query = { email: email };
 			const cursor = contactsCollection.find(query);
