@@ -85,65 +85,6 @@ async function run() {
 			res.send({ result, token });
 		});
 
-		/* **********************************************************
-		* ******************* Start Database Transfer ****************
-		*********************************************************** */
-
-		//connect to secondary database 
-		const newDb = {
-			DB_USER: 'smssenderapp',
-			DB_PASSWORD: 'LKVyQ5FNwjjD6qxk',
-			DB_CLUSTER: 'cluster1.0usr8.mongodb.net',
-		};
-		newUri = `mongodb+srv://${newDb.DB_USER}:${newDb.DB_PASSWORD}@${newDb.DB_CLUSTER}/?retryWrites=true&w=majority`;
-		const secondary = new MongoClient(newUri, {
-			useNewUrlParser: true,
-			useUnifiedTopology: true,
-			serverApi: ServerApiVersion.v1,
-		});
-		await secondary.connect();
-		const secondaryDatabase = secondary.db("smsApiDatabase");
-		const secondarySmsApiDataCollection = secondaryDatabase.collection("smsApi");
-		const secondaryMobileNumberDataCollection = secondaryDatabase.collection("mobileNumberData");
-		const secondaryCsvFileDataCollection = secondaryDatabase.collection("csvFileData");
-		const secondaryContactsCollection = secondaryDatabase.collection("uploadExcelFile");
-		const secondaryCampaignCollection = secondaryDatabase.collection("campaignListData");
-		const secondaryUsersDataCollections = secondaryDatabase.collection("users");
-		const secondarySubscriptionListCollection = secondaryDatabase.collection("subscriptionList");
-		const secondaryAdminDataCollection = secondaryDatabase.collection("adminList");
-		const secondaryMessageTemplates = secondaryDatabase.collection("templates");
-		const secondaryUserCollection = secondaryDatabase.collection("users");
-
-		//transfer data from primary database to secondary database
-		app.get('/transfer/data', async (req, res) => {
-			const smsApiData = await smsApiDataCollection.find({}).toArray();
-			const mobileNumberData = await mobileNumberDataCollection.find({}).toArray();
-			const csvFileData = await csvFileDataCollection.find({}).toArray();
-			const contacts = await contactsCollection.find({}).toArray();
-			const campaignListData = await campaignCollection.find({}).toArray();
-			const usersData = await usersDataCollections.find({}).toArray();
-			const subscriptionList = await subscriptionListCollection.find({}).toArray();
-			const adminData = await adminDataCollection.find({}).toArray();
-			const messageTemplates = await MessageTemplates.find({}).toArray();
-			const user = await userCollection.find({}).toArray();
-			await secondarySmsApiDataCollection.insertMany(smsApiData);
-			await secondaryMobileNumberDataCollection.insertMany(mobileNumberData);
-			await secondaryCsvFileDataCollection.insertMany(csvFileData);
-			await secondaryContactsCollection.insertMany(contacts);
-			await secondaryCampaignCollection.insertMany(campaignListData);
-			await secondaryUsersDataCollections.insertMany(usersData);
-			await secondarySubscriptionListCollection.insertMany(subscriptionList);
-			await secondaryAdminDataCollection.insertMany(adminData);
-			await secondaryMessageTemplates.insertMany(messageTemplates);
-			await secondaryUserCollection.insertMany(user);
-			res.send({ message: 'Data transferred successfully' });
-		}
-		);
-
-		/* **********************************************************
-		* ******************* End Database Transfer ****************
-		*********************************************************** */
-
 
 		/* **********************************************************
 		* ********************** Start SMS API *****************
