@@ -447,7 +447,7 @@ async function run() {
 		});
 
 		// Delete contacts data from database
-		app.delete("/contacts:id", async (req, res) => {
+		app.delete("/contacts/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const result = await contactsCollection.deleteOne(query);
