@@ -782,7 +782,7 @@ async function run() {
 			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200";
 			user["id"] = uuidv4().slice(0, 6);
 			user["isActiveUser"] = "no";
-			user["role"] = users;
+			user["role"] = "user";
 			//get username from email
 			user["userName"] = user.email.split("@")[0];
 			const usersData = await usersDataCollections.insertOne(user);
