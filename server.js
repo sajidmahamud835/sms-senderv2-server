@@ -811,9 +811,9 @@ async function run() {
 			if (!user.role) {
 				user["role"] = "user";
 			}
-			//get username from email
-			if (!user.username) {
-				user.username = user.email.split("@")[0];
+			//get userName from email
+			if (!user.userName) {
+				user.userName = user.email.split("@")[0];
 			}
 			user["profileUpdated"] = false;
 			const usersData = await usersDataCollections.insertOne(user);
