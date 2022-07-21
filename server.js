@@ -429,7 +429,7 @@ async function run() {
 		});
 
 		// Get all mobile number data from a contacts
-		app.get("/contacts/:id", async (req, res) => {
+		app.get("/contacts/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const cursor = contactsCollection.find(query);
@@ -464,7 +464,7 @@ async function run() {
 
 		//campaign corn jobs
 
-		app.get("/corns/campaign", async (req, res) => {
+		app.get("/corns/campaign", verifyJWT, async (req, res) => {
 			try {
 				const campaigns = await campaignCollection.find({}).toArray();
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
@@ -579,7 +579,7 @@ async function run() {
 
 
 		// Get all campaigns
-		app.get("/campaigns/user/:email", async (req, res) => {
+		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			//check if user exists
 			const user = await usersDataCollections.findOne({ email });
@@ -624,7 +624,7 @@ async function run() {
 		* *********************************************************** */
 
 		// get all subscription data from database
-		app.get("/subscriptions", async (req, res) => {
+		app.get("/subscriptions", verifyJWT, async (req, res) => {
 			const cursor = subscriptionListCollection.find({});
 			const subscriptions = await cursor.toArray();
 			res.send(subscriptions);
@@ -639,7 +639,7 @@ async function run() {
 		});
 
 		//get single suscription details
-		app.get("/subscriptions/:id", async (req, res) => {
+		app.get("/subscriptions/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			console.log(query);
@@ -693,7 +693,7 @@ async function run() {
 		});
 
 		//Use this to run mass update of users
-		app.get("/updateAllProfile", async (req, res) => {
+		app.get("/updateAllProfile", verifyJWT, async (req, res) => {
 			const data = req.body;
 			const filter = {};
 			const updateDoc = {
