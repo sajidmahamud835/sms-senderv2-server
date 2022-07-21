@@ -690,6 +690,28 @@ async function run() {
 			res.send(usersDataList);
 		});
 
+		//Use this to run mass update of users
+		app.get("/updateAllProfile", async (req, res) => {
+			const data = req.body;
+			const filter = {};
+			const updateDoc = {
+				$set: {
+					isActiveUser: "no",
+				},
+			};
+			const result = await usersDataCollections.updateMany(
+				filter,
+				updateDoc
+			);
+			if (result) {
+				const cursor = usersDataCollections.find({});
+				const userData = await cursor.toArray();
+				res.json({ ...result, data: userData });
+			}
+		}
+		);
+
+
 		// get inusers from database (isActiveUser === "no")
 		app.get("/users/inactive", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({ isActiveUser: "no" });
@@ -779,12 +801,21 @@ async function run() {
 			const user = req.body;
 			const d = new Date();
 			user["accountCreated"] = d.toDateString();
-			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200";
+			if (!imageUrl) {
+				user["imageUrl"] = "/user.jpg";
+			}
 			user["id"] = uuidv4().slice(0, 6);
-			user["isActiveUser"] = "no";
-			user["role"] = "user";
+			if (!user.isActiveUser) {
+				user["isActiveUser"] = "no";
+			}
+			if (!user.role) {
+				user["role"] = "user";
+			}
 			//get username from email
-			user["userName"] = user.email.split("@")[0];
+			if (!user.username) {
+				user.username = user.email.split("@")[0];
+			}
+			user["profileUpdated"] = false;
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
 		});
