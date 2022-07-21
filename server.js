@@ -801,7 +801,7 @@ async function run() {
 			const user = req.body;
 			const d = new Date();
 			user["accountCreated"] = d.toDateString();
-			if (user.imageUrl) {
+			if (!user.imageUrl) {
 				user["imageUrl"] = "/user.jpg";
 			}
 			user["id"] = uuidv4().slice(0, 6);
