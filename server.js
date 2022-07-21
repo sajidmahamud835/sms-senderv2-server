@@ -558,6 +558,7 @@ async function run() {
 			const id = req.params.id;
 			const updateStatus = req.body;
 			const filter = { _id: ObjectId(id) };
+			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					status: updateStatus.status,
@@ -565,7 +566,8 @@ async function run() {
 			};
 			const result = await campaignCollection.updateOne(
 				filter,
-				updateDoc
+				updateDoc,
+				options
 			);
 			if (result) {
 				const cursor = campaignCollection.find({});
