@@ -72,6 +72,8 @@ async function run() {
 		const userCollection = database.collection("users");
 
 
+
+
 		// setting JWT
 		app.put('/user/jwt/:email', async (req, res) => {
 			const email = req.params.email;
