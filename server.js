@@ -466,7 +466,7 @@ async function run() {
 
 		//campaign corn jobs
 
-		app.get("/corns/campaign", verifyJWT, async (req, res) => {
+		app.get("/corns/campaign", async (req, res) => {
 			try {
 				const campaigns = await campaignCollection.find({}).toArray();
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
