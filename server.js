@@ -29,19 +29,19 @@ const date =
 const time =
 	today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
 const dateTime = date + " " + time;
-// console.log(dateTime);
+// // console.log(dateTime);
 
 //date and time to number
 const dateToNumber = new Date(dateTime);
 const dateNumber = dateToNumber.getTime();
-// console.log(dateNumber);
+// // console.log(dateNumber);
 
 
 
 // JWT token verification function
 function verifyJWT(req, res, next) {
 	const authHeader = req.headers.authorization;
-	// console.log(authHeader);
+	// // console.log(authHeader);
 	if (!authHeader) {
 		return res.status(401).send({ message: 'UnAuthorized access' });
 	}
@@ -111,7 +111,7 @@ async function run() {
 							from: sender,
 						})
 						.then((message) => {
-							// console.log(message);
+							// // console.log(message);
 							if (message.sid) {
 								message_id.push(message.sid);
 							}
@@ -123,7 +123,7 @@ async function run() {
 					messageIds: message_id,
 				});
 			} catch (error) {
-				// console.log(error);
+				// // console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Sent Failed!" + " " + error.message,
@@ -148,7 +148,7 @@ async function run() {
 					messages: messages,
 				});
 			} catch (error) {
-				// console.log(error);
+				// // console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Sent Failed!" + " " + error.message,
@@ -219,7 +219,7 @@ async function run() {
 					statusReport: monthlySmsStatusCount,
 				});
 			} catch (error) {
-				// console.log(error);
+				// // console.log(error);
 				res.json({
 					status: 400,
 					message: error.message,
@@ -260,7 +260,7 @@ async function run() {
 				}
 			}
 			catch (error) {
-				// console.log(error);
+				// // console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Templates Fetched Failed!" + " " + error.message,
@@ -302,7 +302,7 @@ async function run() {
 
 		app.delete('/templates/:id', async (req, res) => {
 			const id = req.params.id;
-			// console.log(id);
+			// // console.log(id);
 			const query = { _id: ObjectId(id) };
 			const result = await MessageTemplates.deleteOne(query);
 			res.json(result);
@@ -329,7 +329,7 @@ async function run() {
 			const id = req.params.id;
 			const updatedNumber = req.body;
 			const filter = { _id: ObjectId(id) };
-			// console.log(updatedNumber);
+			// // console.log(updatedNumber);
 			const updateDoc = {
 				$set: {
 					number: updatedNumber.number,
@@ -490,7 +490,7 @@ async function run() {
 							.toArray();
 						for (const r of receiver) {
 							for (const number of r?.array) {
-								// console.log("number", number.mobile);
+								// // console.log("number", number.mobile);
 								await client.messages
 									.create({
 										body: message,
@@ -498,7 +498,7 @@ async function run() {
 										from: sender,
 									})
 									.then((message) => {
-										// console.log(message);
+										// // console.log(message);
 										if (message.sid) {
 											message_id.push(message.sid);
 										}
@@ -506,7 +506,7 @@ async function run() {
 							}
 						}
 					} else {
-						// console.log("not toady", startDate, date);
+						// // console.log("not toady", startDate, date);
 					}
 				}
 				res.json({
@@ -515,7 +515,7 @@ async function run() {
 					messageIds: message_id,
 				});
 			} catch (error) {
-				// console.log(error);
+				// // console.log(error);
 				res.json({
 					status: 400,
 					message: "Message Sent Failed!" + " " + error.message,
@@ -546,42 +546,66 @@ async function run() {
 		);
 
 		// Get single campaign details
-		app.get("/campaigns/:id", verifyJWT, async (req, res) => {
+		app.get("/campaigns/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
-			// console.log(query);
+			// // console.log(query);
 			const cursor = campaignCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result);
 		});
 
 		// Update single campaign details
-		app.put("/campaigns/:id", async (req, res) => {
+		// app.put("/campaigns/:id", async (req, res) => {
+		// 	const id = req.params.id;
+		// 	const updateStatus = req.body;
+
+		// 	const filter = { _id: ObjectId(id) };
+		// 	const options = { upsert: true };
+		// 	const updateDoc = {
+		// 		$set: {
+		// 			status: updateStatus.status,
+		// 		},
+		// 	};
+		// 	const result = await campaignCollection.updateOne(
+		// 		filter,
+		// 		updateDoc,
+		// 		options
+		// 	);
+		// 	console.log(result);
+		// 	if (result) {
+		// 		const cursor = campaignCollection.find({});
+		// 		const campaignData = await cursor.toArray();
+		// 		res.json({ ...result, data: campaignData });
+		// 	}
+		// });
+
+		// make a put method for update campaign in campaignCollection
+		app.put("/campaigns-update/:id", async (req, res) => {
 			const id = req.params.id;
-			const updateStatus = req.body;
+			const updatedData = req.body;
 			const filter = { _id: ObjectId(id) };
-			const options = { upsert: true };
+			console.log(updatedData);
 			const updateDoc = {
 				$set: {
-					status: updateStatus.status,
+					...updatedData,
 				},
 			};
 			const result = await campaignCollection.updateOne(
 				filter,
-				updateDoc,
-				options
+				updateDoc
 			);
 			if (result) {
 				const cursor = campaignCollection.find({});
 				const campaignData = await cursor.toArray();
 				res.json({ ...result, data: campaignData });
 			}
-		});
-
+		}
+		);
 
 
 		// Get all campaigns
-		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
+		app.get("/campaigns/user/:email", async (req, res) => {
 			const email = req.params.email;
 			//check if user exists
 			const user = await usersDataCollections.findOne({ email });
@@ -644,7 +668,7 @@ async function run() {
 		app.get("/subscriptions/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
-			console.log(query);
+			// console.log(query);
 			const cursor = subscriptionListCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result[0]);
@@ -778,10 +802,10 @@ async function run() {
 		// post user to database using email
 		app.post("/users/complete", async (req, res) => {
 			const data = req.body;
-			console.log(data);
+			// console.log(data);
 			if (!data.imageUrl) {
 				data["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
-				console.log(data.imageUrl);
+				// console.log(data.imageUrl);
 			}
 			if (!data.id) {
 				data["id"] = uuidv4().slice(0, 6); // generate unique id  and splice uuidv4() to get only first 6 characters
@@ -827,7 +851,7 @@ async function run() {
 		app.put("/users/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateUserData = req.body;
-			console.log(updateUserData);
+			// console.log(updateUserData);
 			const filter = { _id: ObjectId(id) };
 
 			const updateDoc = {
@@ -976,7 +1000,7 @@ async function run() {
 				active: 0,
 				draft: 0,
 			};
-			console.log(result);
+			// console.log(result);
 			result.forEach(campaign => {
 
 				if (campaign.status === "Scheduled") {
@@ -1029,7 +1053,7 @@ async function run() {
 			res.send(csvDataList);
 		});
 
-		// console.log("Database connected");
+		// // console.log("Database connected");
 	} finally {
 		// await client.close();
 	}
@@ -1043,5 +1067,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-	// console.log("Server running on port: ", port);
+	// // console.log("Server running on port: ", port);
 });
