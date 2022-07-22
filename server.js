@@ -431,7 +431,7 @@ async function run() {
 		});
 
 		// Get all mobile number data from a contacts
-		app.get("/contacts/:id", async (req, res) => {
+		app.get("/contacts/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const cursor = contactsCollection.find(query);
@@ -466,7 +466,7 @@ async function run() {
 
 		//campaign corn jobs
 
-		app.get("/corns/campaign", async (req, res) => {
+		app.get("/corns/campaign", verifyJWT, async (req, res) => {
 			try {
 				const campaigns = await campaignCollection.find({}).toArray();
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
@@ -560,6 +560,7 @@ async function run() {
 			const id = req.params.id;
 			const updateStatus = req.body;
 			const filter = { _id: ObjectId(id) };
+			const options = { upsert: true };
 			const updateDoc = {
 				$set: {
 					status: updateStatus.status,
@@ -567,7 +568,8 @@ async function run() {
 			};
 			const result = await campaignCollection.updateOne(
 				filter,
-				updateDoc
+				updateDoc,
+				options
 			);
 			if (result) {
 				const cursor = campaignCollection.find({});
@@ -579,7 +581,7 @@ async function run() {
 
 
 		// Get all campaigns
-		app.get("/campaigns/user/:email", async (req, res) => {
+		app.get("/campaigns/user/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			//check if user exists
 			const user = await usersDataCollections.findOne({ email });
@@ -624,7 +626,7 @@ async function run() {
 		* *********************************************************** */
 
 		// get all subscription data from database
-		app.get("/subscriptions", async (req, res) => {
+		app.get("/subscriptions", verifyJWT, async (req, res) => {
 			const cursor = subscriptionListCollection.find({});
 			const subscriptions = await cursor.toArray();
 			res.send(subscriptions);
@@ -639,7 +641,7 @@ async function run() {
 		});
 
 		//get single suscription details
-		app.get("/subscriptions/:id", async (req, res) => {
+		app.get("/subscriptions/:id", verifyJWT, async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			console.log(query);
@@ -691,6 +693,28 @@ async function run() {
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
 		});
+
+		//Use this to run mass update of users
+		app.get("/updateAllProfile", verifyJWT, async (req, res) => {
+			const data = req.body;
+			const filter = {};
+			const updateDoc = {
+				$set: {
+					isActiveUser: "no",
+				},
+			};
+			const result = await usersDataCollections.updateMany(
+				filter,
+				updateDoc
+			);
+			if (result) {
+				const cursor = usersDataCollections.find({});
+				const userData = await cursor.toArray();
+				res.json({ ...result, data: userData });
+			}
+		}
+		);
+
 
 		// get inusers from database (isActiveUser === "no")
 		app.get("/users/inactive", verifyJWT, async (req, res) => {
@@ -781,12 +805,21 @@ async function run() {
 			const user = req.body;
 			const d = new Date();
 			user["accountCreated"] = d.toDateString();
-			user["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200";
+			if (!user.imageUrl) {
+				user["imageUrl"] = "/user.jpg";
+			}
 			user["id"] = uuidv4().slice(0, 6);
-			user["isActiveUser"] = "no";
-			user["role"] = "user";
-			//get username from email
-			user["userName"] = user.email.split("@")[0];
+			if (!user.isActiveUser) {
+				user["isActiveUser"] = "no";
+			}
+			if (!user.role) {
+				user["role"] = "user";
+			}
+			//get userName from email
+			if (!user.userName) {
+				user.userName = user.email.split("@")[0];
+			}
+			user["profileUpdated"] = false;
 			const usersData = await usersDataCollections.insertOne(user);
 			res.json(usersData);
 		});
