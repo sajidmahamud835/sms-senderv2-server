@@ -498,7 +498,7 @@ async function run() {
 										from: sender,
 									})
 									.then((message) => {
-										// // console.log(message);
+										console.log(message);
 										if (message.sid) {
 											message_id.push(message.sid);
 										}
@@ -523,6 +523,19 @@ async function run() {
 				});
 			}
 		});
+
+		//view single message log using message id from twilio
+		app.get("/corns/message/:messageId", async (req, res) => {
+			const smsApiData = await smsApiDataCollection.find({}).toArray();
+			const tclient = new twilio(
+				smsApiData[0].accountSID,
+				smsApiData[0].authToken
+			);
+			const messageId = req.params.messageId;
+			const message = await tclient.messages(`${messageId}`).fetch();
+			res.json(message);
+		}
+		);
 
 		// count active, inactive, draft campaigns
 		app.get("/campaigns/count", verifyJWT, async (req, res) => {
