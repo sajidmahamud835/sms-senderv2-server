@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const port = process.env.PORT || 4000;
 const twilio = require("twilio");
@@ -12,7 +12,7 @@ require("dotenv").config();
 app.use(cors());
 app.use(express.json());
 //use uuidv4 to generate unique id
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_CLUSTER}/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -36,19 +36,17 @@ const dateToNumber = new Date(dateTime);
 const dateNumber = dateToNumber.getTime();
 // // console.log(dateNumber);
 
-
-
 // JWT token verification function
 function verifyJWT(req, res, next) {
 	const authHeader = req.headers.authorization;
 	// // console.log(authHeader);
 	if (!authHeader) {
-		return res.status(401).send({ message: 'UnAuthorized access' });
+		return res.status(401).send({ message: "UnAuthorized access" });
 	}
-	const token = authHeader.split(' ')[1];
+	const token = authHeader.split(" ")[1];
 	jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
 		if (err) {
-			return res.status(403).send({ message: 'Forbidden access' });
+			return res.status(403).send({ message: "Forbidden access" });
 		}
 		req.decoded = decoded;
 		next();
@@ -71,11 +69,8 @@ async function run() {
 		const MessageTemplates = database.collection("templates");
 		const userCollection = database.collection("users");
 
-
-
-
 		// setting JWT
-		app.put('/user/jwt/:email', async (req, res) => {
+		app.put("/user/jwt/:email", async (req, res) => {
 			const email = req.params.email;
 			const user = req.body;
 			const filter = { email: email };
@@ -87,10 +82,9 @@ async function run() {
 			res.send({ result, token });
 		});
 
-
 		/* **********************************************************
-		* ********************** Start SMS API *****************
-		*********************************************************** */
+		 * ********************** Start SMS API *****************
+		 *********************************************************** */
 
 		//Send SMS
 		app.post("/sms/send", async (req, res) => {
@@ -132,8 +126,7 @@ async function run() {
 			}
 		});
 
-
-		// Get all SMS logs from twailio	
+		// Get all SMS logs from twailio
 		app.get("/sms/logs", verifyJWT, async (req, res) => {
 			try {
 				const smsApiData = await smsApiDataCollection.find({}).toArray();
@@ -168,7 +161,11 @@ async function run() {
 				const messages = await client.messages.list({
 					dateSent: {
 						$gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-						$lte: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+						$lte: new Date(
+							new Date().getFullYear(),
+							new Date().getMonth() + 1,
+							0
+						),
 					},
 				});
 				//get monthly sms logs
@@ -183,11 +180,19 @@ async function run() {
 
 				//count sms per day
 				const monthlySmsCount = [];
-				for (let i = 1; i <= new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(); i++) {
+				for (
+					let i = 1;
+					i <=
+					new Date(
+						new Date().getFullYear(),
+						new Date().getMonth() + 1,
+						0
+					).getDate();
+					i++
+				) {
 					const count = monthlySmsLogs.filter((message) => {
 						return message.date.getDate() === i;
-					}
-					).length;
+					}).length;
 					const element = { name: i };
 					element["SMS Sent"] = count;
 					monthlySmsCount.push(element);
@@ -209,9 +214,7 @@ async function run() {
 						acc.push(curr);
 					}
 					return acc;
-				}
-					, []);
-
+				}, []);
 
 				res.json({
 					status: 200,
@@ -226,12 +229,10 @@ async function run() {
 					code: error.code,
 				});
 			}
-		}
-		);
-
+		});
 
 		// get message templates
-		app.get('/templates/:email', verifyJWT, async (req, res) => {
+		app.get("/templates/:email", verifyJWT, async (req, res) => {
 			const email = req.params.email;
 			try {
 				const user = await userCollection.findOne({ email: email });
@@ -258,8 +259,7 @@ async function run() {
 						templates: templates,
 					});
 				}
-			}
-			catch (error) {
+			} catch (error) {
 				// // console.log(error);
 				res.json({
 					status: 400,
@@ -267,11 +267,10 @@ async function run() {
 					code: error.code,
 				});
 			}
-		}
-		);
+		});
 
 		//post  message templates
-		app.post('/templates', async (req, res) => {
+		app.post("/templates", async (req, res) => {
 			const data = req.body;
 			const result = await MessageTemplates.insertOne(data);
 			res.json(result);
@@ -279,7 +278,7 @@ async function run() {
 
 		//update message templates
 
-		app.put('/templates/:id', async (req, res) => {
+		app.put("/templates/:id", async (req, res) => {
 			const id = req.params.id;
 			const updatedMessage = req.body;
 			const filter = { _id: ObjectId(id) };
@@ -287,10 +286,14 @@ async function run() {
 			const updateDoc = {
 				$set: {
 					title: updatedMessage.title,
-					message: updatedMessage.message
+					message: updatedMessage.message,
 				},
 			};
-			const result = await MessageTemplates.updateOne(filter, updateDoc, options);
+			const result = await MessageTemplates.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
 			if (result) {
 				const cursor = MessageTemplates.find({});
 				const template = await cursor.toArray();
@@ -300,7 +303,7 @@ async function run() {
 
 		// delete message templates
 
-		app.delete('/templates/:id', async (req, res) => {
+		app.delete("/templates/:id", async (req, res) => {
 			const id = req.params.id;
 			// // console.log(id);
 			const query = { _id: ObjectId(id) };
@@ -321,7 +324,6 @@ async function run() {
 			const cursor = mobileNumberDataCollection.find({});
 			const mobileNumberData = await cursor.toArray();
 			res.send(mobileNumberData);
-
 		});
 
 		// update mobile number data
@@ -344,7 +346,6 @@ async function run() {
 				const mobileNumberData = await cursor.toArray();
 				res.json({ ...result, data: mobileNumberData });
 			}
-
 		});
 
 		// delete mobile number data
@@ -380,10 +381,7 @@ async function run() {
 					...updatedSmsApiData,
 				},
 			};
-			const result = await smsApiDataCollection.updateOne(
-				filter,
-				updateDoc
-			);
+			const result = await smsApiDataCollection.updateOne(filter, updateDoc);
 			if (result) {
 				const cursor = smsApiDataCollection.find({});
 				const latestSmsApiData = await cursor.toArray();
@@ -404,7 +402,6 @@ async function run() {
 					number: element,
 				};
 
-
 				const numberData = await mobileNumberDataCollection.insertOne(data);
 				response.push(numberData);
 			}
@@ -413,13 +410,12 @@ async function run() {
 		});
 
 		/* **********************************************************
-		* ********************** End SMS API *****************
-		*********************************************************** */
+		 * ********************** End SMS API *****************
+		 *********************************************************** */
 
 		/* ***********************************************
-		* ************* START CONTACTS DATA ***************
-		************************************************ */
-
+		 * ************* START CONTACTS DATA ***************
+		 ************************************************ */
 
 		// Get all contacts data from database
 		app.get("/contacts/email/:email", verifyJWT, async (req, res) => {
@@ -430,8 +426,15 @@ async function run() {
 			res.send(uploadExcelFileData);
 		});
 
+		app.get("/contacts/test", async (req, res) => {
+			const query = {};
+			const cursor = contactsCollection.find(query);
+			const uploadExcelFileData = await cursor.toArray();
+			res.send(uploadExcelFileData);
+		});
+
 		// Get all mobile number data from a contacts
-		app.get("/contacts/:id", verifyJWT, async (req, res) => {
+		app.get("/contacts/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: ObjectId(id) };
 			const cursor = contactsCollection.find(query);
@@ -439,12 +442,43 @@ async function run() {
 			res.send(result);
 		});
 
+		// Put single mobile number data from a contact list
+		app.put("/single-contact/:id/:numberId", async (req, res) => {
+			const body = req.body;
+			console.log(body);
+			const id = req.params.id;
+			const numberId = req.params.numberId;
+			console.log(id, numberId);
+			const query = { _id: ObjectId(id) };
+			const cursor = contactsCollection.find(query);
+			const result = await cursor.toArray();
+			const contactListArray = result[0].array;
+			contactListArray[numberId - 1] = body;
+			console.log(contactListArray);
+			console.log(result[0]);
+			const options = { upsert: false };
+			const filter = { _id: ObjectId(result[0]._id) };
+			console.log(filter);
+			const update = await campaignCollection.updateOne(
+				filter,
+				{
+					$set: { ...result[0] },
+				},
+				options
+			);
+			console.log(update);
+		});
+
+		app.post("/test", async (req, res) => {
+			const body = req.body;
+			console.log(body);
+			res.send(body);
+		});
+
 		// Post contacts data from client site
 		app.post("/contacts", async (req, res) => {
 			const data = req.body;
-			const uploadExcelFileData = await contactsCollection.insertOne(
-				data
-			);
+			const uploadExcelFileData = await contactsCollection.insertOne(data);
 			res.json(uploadExcelFileData);
 		});
 
@@ -457,12 +491,12 @@ async function run() {
 		});
 
 		/* ***********************************************
-		* ************* END CONTACTS DATA ***************
-		************************************************ */
+		 * ************* END CONTACTS DATA ***************
+		 ************************************************ */
 
 		/* ***********************************************************
-		* ****************** Start Campaigns Route *******************
-		* *********************************************************** */
+		 * ****************** Start Campaigns Route *******************
+		 * *********************************************************** */
 
 		//campaign corn jobs
 
@@ -484,7 +518,8 @@ async function run() {
 					} = campaignData;
 					startDate = new Date(startDate); //convert startDate to date
 					const currentDate = new Date(); //get current date
-					if (currentDate >= startDate) { //if current date is greater than start date
+					if (currentDate >= startDate) {
+						//if current date is greater than start date
 						const receiver = await contactsCollection
 							.find({ _id: ObjectId(contactList) })
 							.toArray();
@@ -534,8 +569,7 @@ async function run() {
 			const messageId = req.params.messageId;
 			const message = await tclient.messages(`${messageId}`).fetch();
 			res.json(message);
-		}
-		);
+		});
 
 		// count active, inactive, draft campaigns
 		app.get("/campaigns/count", verifyJWT, async (req, res) => {
@@ -555,8 +589,7 @@ async function run() {
 				scheduledCampaigns: inactiveCampaigns.length,
 				draftCampaigns: draftCampaigns.length,
 			});
-		}
-		);
+		});
 
 		// Get single campaign details
 		app.get("/campaigns/:id", async (req, res) => {
@@ -604,18 +637,13 @@ async function run() {
 					...updatedData,
 				},
 			};
-			const result = await campaignCollection.updateOne(
-				filter,
-				updateDoc
-			);
+			const result = await campaignCollection.updateOne(filter, updateDoc);
 			if (result) {
 				const cursor = campaignCollection.find({});
 				const campaignData = await cursor.toArray();
 				res.json({ ...result, data: campaignData });
 			}
-		}
-		);
-
+		});
 
 		// Get all campaigns
 		app.get("/campaigns/user/:email", async (req, res) => {
@@ -636,9 +664,7 @@ async function run() {
 				const campaignDataList = await cursor.toArray();
 				res.send(campaignDataList);
 			}
-
 		});
-
 
 		// post campaign file
 		app.post("/campaigns", async (req, res) => {
@@ -655,12 +681,12 @@ async function run() {
 			res.json(result);
 		});
 		/* ***********************************************************
-		* ****************** End Campaigns Route *******************
-		* *********************************************************** */
+		 * ****************** End Campaigns Route *******************
+		 * *********************************************************** */
 
 		/* ***********************************************************
-		* ****************** Start Subscription Route *******************
-		* *********************************************************** */
+		 * ****************** Start Subscription Route *******************
+		 * *********************************************************** */
 
 		// get all subscription data from database
 		app.get("/subscriptions", verifyJWT, async (req, res) => {
@@ -668,7 +694,6 @@ async function run() {
 			const subscriptions = await cursor.toArray();
 			res.send(subscriptions);
 		});
-
 
 		// suscription list
 		app.post("/subscriptions", verifyJWT, async (req, res) => {
@@ -685,8 +710,7 @@ async function run() {
 			const cursor = subscriptionListCollection.find(query);
 			const result = await cursor.toArray();
 			res.send(result[0]);
-		}
-		);
+		});
 
 		//update subscriptions from client
 		app.put("/subscriptions/:id", async (req, res) => {
@@ -707,8 +731,7 @@ async function run() {
 				const subscriptionData = await cursor.toArray();
 				res.json({ ...result, data: subscriptionData });
 			}
-		}
-		);
+		});
 
 		app.delete("/subscriptions/:id", async (req, res) => {
 			const id = req.params.id;
@@ -717,12 +740,12 @@ async function run() {
 			res.json(result);
 		});
 		/* ***********************************************************
-		* ****************** End Subscription Route *******************
-		* *********************************************************** */
+		 * ****************** End Subscription Route *******************
+		 * *********************************************************** */
 
 		/* ***********************************************************
-		* ****************** Start Users Route *******************
-		* *********************************************************** */
+		 * ****************** Start Users Route *******************
+		 * *********************************************************** */
 
 		// get users from database
 		app.get("/users", async (req, res) => {
@@ -740,26 +763,20 @@ async function run() {
 					isActiveUser: "no",
 				},
 			};
-			const result = await usersDataCollections.updateMany(
-				filter,
-				updateDoc
-			);
+			const result = await usersDataCollections.updateMany(filter, updateDoc);
 			if (result) {
 				const cursor = usersDataCollections.find({});
 				const userData = await cursor.toArray();
 				res.json({ ...result, data: userData });
 			}
-		}
-		);
-
+		});
 
 		// get inusers from database (isActiveUser === "no")
 		app.get("/users/inactive", verifyJWT, async (req, res) => {
 			const cursor = usersDataCollections.find({ isActiveUser: "no" });
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
-		}
-		);
+		});
 
 		// get number of and active users from database
 		app.get("/users/count", verifyJWT, async (req, res) => {
@@ -776,22 +793,19 @@ async function run() {
 			res.send({ activeUsersCount, inactiveUsersCount });
 		});
 
-
 		//get admin users from database
 		app.get("/users/admin", async (req, res) => {
 			const cursor = usersDataCollections.find({ isAdmin: "yes" });
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
-		}
-		);
+		});
 
 		//get non admin users from database
 		app.get("/users/non-admin", async (req, res) => {
 			const cursor = usersDataCollections.find({ isAdmin: "no" });
 			const usersDataList = await cursor.toArray();
 			res.send(usersDataList);
-		}
-		);
+		});
 
 		// get single user from database by id
 		app.get("/users/:id", verifyJWT, async (req, res) => {
@@ -811,13 +825,13 @@ async function run() {
 			res.send(result);
 		});
 
-
 		// post user to database using email
 		app.post("/users/complete", async (req, res) => {
 			const data = req.body;
 			// console.log(data);
 			if (!data.imageUrl) {
-				data["imageUrl"] = "https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
+				data["imageUrl"] =
+					"https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=200"; // add default image to user object
 				// console.log(data.imageUrl);
 			}
 			if (!data.id) {
@@ -830,10 +844,7 @@ async function run() {
 					...data,
 				},
 			};
-			const result = await usersDataCollections.updateOne(
-				query,
-				updateDoc
-			);
+			const result = await usersDataCollections.updateOne(query, updateDoc);
 			res.json(result);
 		});
 
@@ -872,10 +883,7 @@ async function run() {
 					...updateUserData,
 				},
 			};
-			const result = await usersDataCollections.updateOne(
-				filter,
-				updateDoc
-			);
+			const result = await usersDataCollections.updateOne(filter, updateDoc);
 			if (result) {
 				const cursor = usersDataCollections.find({});
 				const latestUsersData = await cursor.toArray();
@@ -892,12 +900,12 @@ async function run() {
 		});
 
 		/* ***********************************************************
-		* ****************** End Users Route *******************
-		* *********************************************************** */
+		 * ****************** End Users Route *******************
+		 * *********************************************************** */
 
 		/* ***********************************************************
-		* ****************** Start Admin Route *******************
-		* *********************************************************** */
+		 * ****************** Start Admin Route *******************
+		 * *********************************************************** */
 
 		//check if user is admin
 		app.get("/admin/check/:email", async (req, res) => {
@@ -908,13 +916,10 @@ async function run() {
 
 			if (result.length > 0 && result[0].role === "admin") {
 				res.send({ isAdmin: true, status: 200 });
-			}
-			else {
+			} else {
 				res.send({ isAdmin: false, status: 400 });
 			}
-
-		}
-		);
+		});
 
 		// get email from req.body and update user to admin
 		app.post("/admins", async (req, res) => {
@@ -934,24 +939,17 @@ async function run() {
 			//update user to admin
 			else {
 				const updateDoc = { $set: { role: "admin", position: "Admin" } };
-				const result = await usersDataCollections.updateOne(
-					query,
-					updateDoc
-				);
+				const result = await usersDataCollections.updateOne(query, updateDoc);
 				res.json(result);
-
 			}
-		}
-		);
-
+		});
 
 		// get all users with role admin from database
 		app.get("/admins", async (req, res) => {
 			const cursor = usersDataCollections.find({ role: "admin" });
 			const result = await cursor.toArray();
 			res.send(result);
-		}
-		);
+		});
 
 		// update users position by email
 		app.put("/admins/:email", async (req, res) => {
@@ -963,10 +961,7 @@ async function run() {
 					position: updatedData.position,
 				},
 			};
-			const result = await usersDataCollections.updateOne(
-				filter,
-				updateDoc
-			);
+			const result = await usersDataCollections.updateOne(filter, updateDoc);
 			res.json(result);
 		});
 
@@ -974,22 +969,18 @@ async function run() {
 		app.delete("/admins/:email", async (req, res) => {
 			const email = req.params.email;
 			const query = { email: email };
-			const updateDoc = { $set: { role: 'user', position: 'User' } };
-			const result = await usersDataCollections.updateOne(
-				query,
-				updateDoc
-			);
+			const updateDoc = { $set: { role: "user", position: "User" } };
+			const result = await usersDataCollections.updateOne(query, updateDoc);
 			res.json(result);
-		}
-		);
+		});
 
 		/* ***********************************************************
-		* ****************** End Admin Route *******************
-		* *********************************************************** */
+		 * ****************** End Admin Route *******************
+		 * *********************************************************** */
 
 		/* ***********************************************************
-		* ****************** Start User Statics *******************
-		* *********************************************************** */
+		 * ****************** Start User Statics *******************
+		 * *********************************************************** */
 		// //count campaigns by status and by user
 		// app.get("/campaigns/count/:status/:user", async (req, res) => {
 		// 	const status = req.params.status;
@@ -1014,30 +1005,21 @@ async function run() {
 				draft: 0,
 			};
 			// console.log(result);
-			result.forEach(campaign => {
-
+			result.forEach((campaign) => {
 				if (campaign.status === "Scheduled") {
 					count.scheduled++;
-				}
-				else if (campaign.status === "Active") {
+				} else if (campaign.status === "Active") {
 					count.active++;
-				}
-				else if (campaign.status === "Draft") {
+				} else if (campaign.status === "Draft") {
 					count.draft++;
 				}
-			}
-			);
+			});
 			res.send(count);
-		}
-		);
-
-
+		});
 
 		/* ***********************************************************
-			* ****************** End User Statics *******************
-		* *********************************************************** */
-
-
+		 * ****************** End User Statics *******************
+		 * *********************************************************** */
 
 		// post CSV File from client site
 		app.post("/csvList", async (req, res) => {
