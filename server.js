@@ -443,30 +443,53 @@ async function run() {
 		});
 
 		// Put single mobile number data from a contact list
+		// app.put("/single-contact/:id/:numberId", async (req, res) => {
+		// 	const body = req.body;
+		// 	console.log(body);
+		// 	const id = req.params.id;
+		// 	const numberId = req.params.numberId;
+		// 	console.log(id, numberId);
+		// 	const query = { _id: ObjectId(id) };
+		// 	const cursor = contactsCollection.find(query);
+		// 	const result = await cursor.toArray();
+		// 	const contactListArray = result[0].array;
+		// 	contactListArray[numberId - 1] = body;
+		// 	console.log(contactListArray);
+		// 	console.log(result[0]);
+		// 	const options = { upsert: false };
+		// 	const filter = { _id: ObjectId(result[0]._id) };
+		// 	console.log(filter);
+		// 	const update = await campaignCollection.updateOne(
+		// 		filter,
+		// 		{
+		// 			$set: { ...result[0] },
+		// 		},
+		// 		options
+		// 	);
+		// 	console.log(update);
+		// });
+		//create a put method to update a single contact
+
+
+
+
 		app.put("/single-contact/:id/:numberId", async (req, res) => {
 			const body = req.body;
-			console.log(body);
 			const id = req.params.id;
 			const numberId = req.params.numberId;
-			console.log(id, numberId);
-			const query = { _id: ObjectId(id) };
-			const cursor = contactsCollection.find(query);
-			const result = await cursor.toArray();
-			const contactListArray = result[0].array;
-			contactListArray[numberId - 1] = body;
-			console.log(contactListArray);
-			console.log(result[0]);
-			const options = { upsert: false };
-			const filter = { _id: ObjectId(result[0]._id) };
-			console.log(filter);
-			const update = await campaignCollection.updateOne(
+			const findOldData = await contactsCollection.findOne({ _id: ObjectId(id) });
+			const newData = findOldData;
+			newData.array[numberId - 1].name = body.name;
+			newData.array[numberId - 1].mobile = body.mobile;
+			const filter = { _id: ObjectId(id) };
+			const updateDoc = {
+				$set: newData
+			};
+			const result = await contactsCollection.updateOne(
 				filter,
-				{
-					$set: { ...result[0] },
-				},
-				options
+				updateDoc
 			);
-			console.log(update);
+			res.send(result);
 		});
 
 		app.post("/test", async (req, res) => {
